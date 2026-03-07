@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - User Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/admin_dashboard.css">
+    <link rel="stylesheet" href="/css/admin_users.css">
+</head>
+
+<body>
+    <nav class="admin-sidebar" id="sidebar">
+        <!-- Reused Sidebar Structure -->
+        <div class="sidebar-brand"><i class="fa-solid fa-heart-pulse"></i><span>HealthConnect</span></div>
+        <ul class="sidebar-nav">
+            <li class="nav-item"><a href="/admin_dashboard.html"><i class="fa-solid fa-chart-pie"></i><span>Dashboard
+                        Overview</span></a></li>
+            <li class="nav-item active"><a href="/admin_users.html"><i class="fa-solid fa-users-gear"></i><span>User
+                        Management</span></a></li>
+            <li class="nav-item"><a href="/admin_reports.html"><i
+                        class="fa-solid fa-file-invoice-dollar"></i><span>Analytics & Reports</span></a></li>
+            <li class="nav-item"><a href="/admin_settings.html"><i class="fa-solid fa-sliders"></i><span>System
+                        Settings</span></a></li>
+        </ul>
+    </nav>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <h2>User Management Hub</h2>
+        </header>
+
+        <div class="content-wrapper">
+            <!-- Tabs -->
+            <div class="user-tabs">
+                <button class="tab-btn active" data-target="patientsTab">Patients</button>
+                <button class="tab-btn" data-target="doctorsTab">Doctors</button>
+                <button class="tab-btn" data-target="adminsTab">Admins / Staff</button>
+            </div>
+
+            <!-- Table Container -->
+            <div class="table-card">
+                <div class="table-actions">
+                    <div class="search-box">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="userSearch" placeholder="Search by name, email or ID...">
+                    </div>
+                    <div class="filter-box">
+                        <select id="statusFilter">
+                            <option value="ALL">All Statuses</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="SUSPENDED">Suspended</option>
+                        </select>
+                        <button class="btn-primary" id="exportUsersBtn"><i class="fa-solid fa-download"></i> Export
+                            CSV</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Contact</th>
+                                <th>Status</th>
+                                <th>Registered</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center">Loading users...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Controls -->
+                <div class="pagination">
+                    <button id="prevPage" class="page-btn" disabled><i class="fa-solid fa-chevron-left"></i></button>
+                    <span id="pageIndicator">Page 1 of 1</span>
+                    <button id="nextPage" class="page-btn"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for User Actions -->
+    <div id="actionModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="modalTitle">Confirm Action</h3>
+            <p id="modalMessage">Are you sure you want to alter this user's state?</p>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-danger" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="/js/notification_handler.js"></script>
+    <script src="/js/admin_users.js"></script>
+</body>
+
+</html>

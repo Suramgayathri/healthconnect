@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Doctors - HealthConnect</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/doctor_search.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="logo">
+            <i class="fas fa-heartbeat"></i> HealthConnect
+        </a>
+        <a href="patient_dashboard.html"
+            style="color: var(--primary); text-decoration: none; font-weight: 600;">Dashboard</a>
+    </nav>
+
+    <div class="search-header">
+        <h1>Find the Right Doctor for You</h1>
+        <div class="search-bar-container">
+            <div class="search-input">
+                <i class="fas fa-search"></i>
+                <input type="text" id="keywordSearch" placeholder="Search doctors, sub-specialties...">
+            </div>
+            <div class="search-input">
+                <i class="fas fa-stethoscope"></i>
+                <select id="specialtySelect">
+                    <option value="">All Specialties</option>
+                    <option value="Cardiologist">Cardiologist</option>
+                    <option value="Dermatologist">Dermatologist</option>
+                    <option value="Neurologist">Neurologist</option>
+                    <option value="Pediatrician">Pediatrician</option>
+                    <option value="General Physician">General Physician</option>
+                </select>
+            </div>
+            <button class="btn-search" onclick="fetchDoctors()">Search</button>
+        </div>
+    </div>
+
+    <div class="page-content">
+        <aside class="filters">
+            <div class="filter-section">
+                <h4>Availability</h4>
+                <label class="filter-label"><input type="checkbox"> Available Today</label>
+                <label class="filter-label"><input type="checkbox"> Next 3 Days</label>
+                <label class="filter-label"><input type="checkbox"> Weekends</label>
+            </div>
+            <div class="filter-section">
+                <h4>Gender</h4>
+                <label class="filter-label"><input type="checkbox"> Male</label>
+                <label class="filter-label"><input type="checkbox"> Female</label>
+            </div>
+            <div class="filter-section">
+                <h4>Consultation Fee</h4>
+                <label class="filter-label"><input type="radio" name="fee"> Below $50</label>
+                <label class="filter-label"><input type="radio" name="fee"> $50 - $100</label>
+                <label class="filter-label"><input type="radio" name="fee"> Above $100</label>
+            </div>
+        </aside>
+
+        <main>
+            <div class="doctors-grid" id="doctorsContainer">
+                <!-- Data populated here via JS -->
+            </div>
+        </main>
+    </div>
+
+    <script src="js/doctor_search.js"></script>
+<script src="/js/notification_handler.js"></script>
+</body>
+
+</html>

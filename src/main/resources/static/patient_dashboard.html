@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard - HealthConnect</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #4338CA;
+            --secondary: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --dark: #1F2937;
+            --light: #F9FAFB;
+            --white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background: #F3F4F6;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .btn-logout {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            border-radius: 8px;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Dashboard Layout */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: calc(100vh - 72px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: white;
+            padding: 2rem 1rem;
+            border-right: 1px solid #E5E7EB;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            color: #4B5563;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem 5%;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.8rem;
+            color: var(--dark);
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .stat-info h3 {
+            font-size: 2rem;
+            color: var(--dark);
+            line-height: 1;
+        }
+
+        .stat-info p {
+            color: #6B7280;
+            font-size: 0.9rem;
+        }
+
+        /* Lists */
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .appointment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .appointment-doc {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .doc-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #E5E7EB;
+        }
+
+        .doc-info h4 {
+            color: var(--dark);
+            margin-bottom: 0.2rem;
+        }
+
+        .doc-info p {
+            color: #6B7280;
+            font-size: 0.85rem;
+        }
+
+        .appointment-time {
+            text-align: right;
+        }
+
+        .badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-upcoming {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--secondary);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+        }
+
+        </script><script src="js/patient_dashboard.js"></script></head><body><nav class="navbar"><a href="index.html" class="logo"><i class="fas fa-heartbeat"></i>HealthConnect </a><div class="nav-right">
+        <div class="notification-icon-container" style="position: relative; margin-right: 15px; cursor: pointer; display: flex; align-items: center;">
+            <i class="fa-solid fa-bell" style="font-size: 1.2rem; color: #4B5563;"></i>
+            <span class="notification-badge" style="position: absolute; top: -5px; right: -8px; background: #EF4444; color: white; display: none; font-size: 0.7rem; padding: 2px 5px; border-radius: 50%; font-weight: bold;">0</span>
+        </div>
+        <div class="user-profile"><div class="user-avatar" id="userInitial">P</div><span id="userName" style="font-weight: 600;">Patient User</span></div><button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i>Logout</button></div></nav><div class="dashboard-container">< !-- Sidebar --><aside class="sidebar"><ul class="sidebar-menu"><li><a href="patient_dashboard.html" class="active"><i class="fas fa-home"></i>Dashboard</a></li><li><a href="doctor_search.html"><i class="fas fa-search"></i>Find Doctors</a></li><li><a href="appointment_list.html"><i class="fas fa-calendar-check"></i>My Appointments</a></li><li><a href="medical_records.html"><i class="fas fa-notes-medical"></i>Medical Records</a></li><li><a href="profile.html"><i class="fas fa-user-circle"></i>Profile Settings</a></li></ul></aside>< !-- Main Content --><main class="main-content"><div class="page-header"><div><h1>Welcome back,
+        <span id="welcomeName">Patient</span> !</h1><p style="color: #6B7280;">Here is your health overview for today.</p></div><a href="doctor_search.html" class="btn btn-primary"><i class="fas fa-plus"></i>Book Appointment</a></div>< !-- Stats --><div class="dashboard-grid"><div class="card stat-card"><div class="stat-icon" style="background: rgba(79, 70, 229, 0.1); color: var(--primary);"><i class="fas fa-calendar-alt"></i></div><div class="stat-info"><h3>2</h3><p>Upcoming Appointments</p></div></div><div class="card stat-card"><div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--secondary);"><i class="fas fa-file-medical"></i></div><div class="stat-info"><h3>14</h3><p>Medical Records</p></div></div>< !-- Emergency Action --><div class="card" style="background: linear-gradient(135deg, var(--danger), #DC2626); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s;" onclick="window.location.href='emergency_appointment.html'"><div style="text-align: center;"><i class="fas fa-ambulance" style="font-size: 2.5rem; margin-bottom: 0.5rem;"></i><h3 style="margin-bottom: 0.2rem;">Emergency</h3><p style="opacity: 0.9; font-size: 0.9rem;">Book priority slot</p></div></div></div>< !-- Recent Activity / Upcoming --><div class="dashboard-grid" style="grid-template-columns: 2fr 1fr;"><div class="card"><div class="list-header"><h3 style="color: var(--dark);">Upcoming Appointments</h3><a href="appointment_list.html" style="color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 600;">View All</a></div><div class="appointment-item"><div class="appointment-doc"><div class="doc-avatar"></div><div class="doc-info"><h4>Dr. Sarah Jenkins</h4><p>Cardiologist • Apollo Hospital</p></div></div><div class="appointment-time"><p style="font-weight: 600; color: var(--dark);">Oct 24,
+        2023</p><p style="color: #6B7280; font-size: 0.85rem;">10:00 AM - 10:30 AM</p><span class="badge badge-upcoming" style="margin-top: 5px; display: inline-block;">Confirmed</span></div></div><div class="appointment-item"><div class="appointment-doc"><div class="doc-avatar"></div><div class="doc-info"><h4>Dr. Michael Chen</h4><p>Dermatologist • City Clinic</p></div></div><div class="appointment-time"><p style="font-weight: 600; color: var(--dark);">Oct 28,
+        2023</p><p style="color: #6B7280; font-size: 0.85rem;">02:00 PM - 02:30 PM</p><span class="badge badge-upcoming" style="margin-top: 5px; display: inline-block;">Confirmed</span></div></div></div>< !-- Snapshot --><div class="card"><div class="list-header"><h3 style="color: var(--dark);">Health Snapshot</h3></div><div style="margin-bottom: 1rem;"><p style="color: #6B7280; font-size: 0.9rem; margin-bottom: 0.2rem;">Blood Group</p><p style="font-weight: 600; font-size: 1.1rem;">O+Positive</p></div><div style="margin-bottom: 1rem;"><p style="color: #6B7280; font-size: 0.9rem; margin-bottom: 0.2rem;">Allergies</p><p style="font-weight: 600;">Penicillin,
+        Peanuts</p></div><div><p style="color: #6B7280; font-size: 0.9rem; margin-bottom: 0.2rem;">Emergency Contact</p><p style="font-weight: 600;">+1 234 567 8900</p><p style="color: #6B7280; font-size: 0.8rem;">(Jane Doe - Spouse)</p></div></div></div></main></div><script src="/js/notification_handler.js"></script>
+</body></html>
