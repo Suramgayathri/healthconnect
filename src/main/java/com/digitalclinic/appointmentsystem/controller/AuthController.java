@@ -119,8 +119,8 @@ public class AuthController {
                     profile.put("qualifications", doctor.getQualifications());
                     profile.put("experienceYears", doctor.getExperienceYears());
                     profile.put("consultationFee", doctor.getConsultationFee());
-                    profile.put("isAvailable", doctor.isAvailable());
-                    profile.put("isVerified", doctor.isVerified());
+                    profile.put("isAvailable", doctor.getAvailable());
+                    profile.put("isVerified", doctor.getVerified());
                 } else {
                     profile.put("fullName", "Doctor");
                 }

@@ -76,11 +76,20 @@ public class Doctor {
 
     @Column(name = "is_available")
     @Builder.Default
-    private boolean isAvailable = true;
+    private Boolean isAvailable = true;
 
     @Column(name = "is_verified")
     @Builder.Default
-    private boolean isVerified = false;
+    private Boolean isVerified = false;
+
+    // Getters for Boolean fields (Lombok generates getIsAvailable/getIsVerified)
+    public Boolean getAvailable() {
+        return isAvailable;
+    }
+
+    public Boolean getVerified() {
+        return isVerified;
+    }
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

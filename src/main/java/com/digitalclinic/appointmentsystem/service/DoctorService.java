@@ -101,8 +101,8 @@ public class DoctorService {
         doctor.setConsultationFee(dto.getConsultationFee());
         doctor.setProfilePhoto(dto.getProfilePhoto());
 
-        if (dto.isAvailable() != doctor.isAvailable()) {
-            doctor.setAvailable(dto.isAvailable());
+        if (dto.getIsAvailable() != null && !dto.getIsAvailable().equals(doctor.getAvailable())) {
+            doctor.setIsAvailable(dto.getIsAvailable());
         }
 
         Doctor updatedDoctor = doctorRepository.save(doctor);
