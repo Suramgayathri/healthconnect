@@ -25,6 +25,12 @@ public class AnalyticsController {
         return ResponseEntity.ok(analyticsService.getDashboardMetrics());
     }
 
+    @GetMapping("/dashboard")
+    public ResponseEntity<Map<String, Object>> getDashboardMetrics() {
+        return ResponseEntity.ok(analyticsService.getDashboardMetrics());
+    }
+
+
     @GetMapping("/trends")
     public ResponseEntity<Map<String, Object>> getTrends() {
         return ResponseEntity.ok(analyticsService.getAppointmentTrends());

@@ -3,8 +3,12 @@
 -- 1. users
 CREATE TABLE IF NOT EXISTS users (
     user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) UNIQUE,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100),
     email VARCHAR(255) NOT NULL UNIQUE,
     phone VARCHAR(20) NOT NULL UNIQUE,
+    password VARCHAR(255),
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('PATIENT', 'DOCTOR', 'ADMIN') NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
@@ -284,12 +288,12 @@ CREATE TABLE IF NOT EXISTS admin_audit_logs (
 
 -- 1. Insert Users (5 users: 1 admin, 2 doctors, 2 patients)
 -- Password for all users: "password" (BCrypt hash)
-INSERT INTO users (email, phone, password_hash, role, is_active) VALUES
-('admin@healthconnect.com', '+1234567890', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'ADMIN', TRUE),
-('dr.smith@healthconnect.com', '+1234567891', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'DOCTOR', TRUE),
-('dr.jones@healthconnect.com', '+1234567892', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'DOCTOR', TRUE),
-('john.doe@gmail.com', '+1234567893', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'PATIENT', TRUE),
-('jane.doe@gmail.com', '+1234567894', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'PATIENT', TRUE);
+INSERT INTO users (username, first_name, last_name, email, phone, password_hash, role, is_active) VALUES
+('admin', 'Admin', 'User', 'admin@healthconnect.com', '+1234567890', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'ADMIN', TRUE),
+('dr.smith', 'John', 'Smith', 'dr.smith@healthconnect.com', '+1234567891', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'DOCTOR', TRUE),
+('dr.jones', 'Sarah', 'Jones', 'dr.jones@healthconnect.com', '+1234567892', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'DOCTOR', TRUE),
+('john.doe', 'John', 'Doe', 'john.doe@gmail.com', '+1234567893', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'PATIENT', TRUE),
+('jane.doe', 'Jane', 'Doe', 'jane.doe@gmail.com', '+1234567894', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'PATIENT', TRUE);
 
 -- 2. Insert Patients (2 patients)
 INSERT INTO patients (user_id, full_name, dob, gender, blood_group, address, city, state, pincode, emergency_contact, medical_history, allergies, chronic_conditions) VALUES

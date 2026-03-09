@@ -56,11 +56,20 @@ public class UserService {
             throw new RuntimeException("Error: Phone number is already in use!");
         }
 
+        // Split fullName into firstName and lastName
+        String[] nameParts = registrationDTO.getFullName().trim().split("\\s+", 2);
+        String firstName = nameParts[0];
+        String lastName = nameParts.length > 1 ? nameParts[1] : "";
+
         // Create new user's account
         User user = User.builder()
+                .username(registrationDTO.getEmail()) // Use email as username
+                .firstName(firstName)
+                .lastName(lastName)
                 .email(registrationDTO.getEmail())
                 .phone(registrationDTO.getPhone())
-                .password(passwordEncoder.encode(registrationDTO.getPassword()))
+                .passwordPlain(registrationDTO.getPassword()) // Store plain password in password column
+                .password(passwordEncoder.encode(registrationDTO.getPassword())) // Store hashed in password_hash
                 .role(registrationDTO.getRole())
                 .isActive(true)
                 .build();

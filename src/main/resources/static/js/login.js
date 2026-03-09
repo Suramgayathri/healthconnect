@@ -1,68 +1,76 @@
+/**
+ * login.js
+ * Handles login form submission, password visibility toggle,
+ * and role-based redirect after successful authentication.
+ */
+
+// ── Password toggle ──────────────────────────────────────────────────────────
 function togglePassword() {
-            const pwdInput = document.getElementById('password');
-            const eyeIcon = document.querySelector('.fa-eye') || document.querySelector('.fa-eye-slash');
-            if (pwdInput.type === 'password') {
-                pwdInput.type = 'text';
-                eyeIcon.classList.remove('fa-eye');
-                eyeIcon.classList.add('fa-eye-slash');
-            } else {
-                pwdInput.type = 'password';
-                eyeIcon.classList.remove('fa-eye-slash');
-                eyeIcon.classList.add('fa-eye');
-            }
-        }
+    const pwdInput = document.getElementById('password');
+    const eyeIcon  = document.querySelector('.fa-eye') || document.querySelector('.fa-eye-slash');
+    if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        pwdInput.type = 'password';
+        eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
 
-        document.getElementById('loginForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
+// ── Login form submit ────────────────────────────────────────────────────────
+document.getElementById('loginForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
 
-            const btn = document.getElementById('loginBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-            btn.disabled = true;
-            document.getElementById('errorMessage').style.display = 'none';
+    const btn          = document.getElementById('loginBtn');
+    const originalHTML = btn.innerHTML;
+    const errEl        = document.getElementById('errorMessage');
 
-            const payload = {
-                identifier: document.getElementById('identifier').value,
-                password: document.getElementById('password').value
-            };
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    btn.disabled  = true;
+    errEl.style.display = 'none';
 
-            try {
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+    const payload = {
+        identifier: document.getElementById('identifier').value.trim(),
+        password:   document.getElementById('password').value
+    };
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Store token
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('userRole', data.role);
-                    localStorage.setItem('userId', data.id);
-                    localStorage.setItem('userEmail', data.email);
-
-                    // Route to correct dashboard
-                    if (data.role === 'PATIENT') {
-                        window.location.href = 'patient_dashboard.html';
-                    } else if (data.role === 'DOCTOR') {
-                        window.location.href = 'doctor_dashboard.html';
-                    } else {
-                        window.location.href = 'admin_dashboard.html';
-                    }
-                } else {
-                    document.getElementById('errorMessage').innerText = data.error || 'Invalid credentials';
-                    document.getElementById('errorMessage').style.display = 'block';
-                    resetBtn();
-                }
-            } catch (error) {
-                document.getElementById('errorMessage').innerText = 'Server error. Please try again.';
-                document.getElementById('errorMessage').style.display = 'block';
-                resetBtn();
-            }
-
-            function resetBtn() {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Persist session info
+            localStorage.setItem('token',     data.token);
+            localStorage.setItem('userRole',  data.role);
+            localStorage.setItem('userId',    data.id);
+            localStorage.setItem('userEmail', data.email);
+
+            // Route to the correct dashboard based on role
+            if (data.role === 'PATIENT') {
+                window.location.href = 'patient_dashboard.html';
+            } else if (data.role === 'DOCTOR') {
+                window.location.href = 'doctor_dashboard.html';
+            } else {
+                window.location.href = 'admin_dashboard.html';
+            }
+        } else {
+            errEl.innerText      = data.error || 'Invalid credentials. Please try again.';
+            errEl.style.display  = 'block';
+            resetBtn();
+        }
+    } catch (err) {
+        errEl.innerText     = 'Server error. Please try again later.';
+        errEl.style.display = 'block';
+        resetBtn();
+    }
+
+    function resetBtn() {
+        btn.innerHTML = originalHTML;
+        btn.disabled  = false;
+    }
+});

@@ -23,11 +23,23 @@ public class User {
     @Column(name = "user_id")
     private Long id;
 
+    @Column(unique = true)
+    private String username;
+
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    @Column(name = "last_name")
+    private String lastName;
+
     @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false, unique = true, length = 20)
     private String phone;
+
+    @Column(name = "password")
+    private String passwordPlain;
 
     @Column(name = "password_hash", nullable = false)
     private String password;

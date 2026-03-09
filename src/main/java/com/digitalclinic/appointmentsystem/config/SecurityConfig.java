@@ -58,14 +58,16 @@ public class SecurityConfig {
                         // Auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         // Redirect endpoints (without .html)
-                        .requestMatchers("/login", "/register", "/dashboard", "/admin", "/doctor").permitAll()
+                        .requestMatchers("/login", "/register", "/dashboard", "/admin", "/doctor",
+                                "/register-patient", "/register-doctor").permitAll()
                         // Static HTML pages
-                        .requestMatchers("/", "/index.html", "/login.html", "/register.html", 
+                        .requestMatchers("/", "/index.html", "/login.html", "/register.html",
+                                "/register_patient.html", "/register_doctor.html",
                                 "/forgot_password.html", "/patient_dashboard.html", "/doctor_dashboard.html",
                                 "/appointment_booking.html", "/appointment_list.html", "/appointment_details.html",
                                 "/emergency_appointment.html", "/app_updation.html", "/medical_records.html",
                                 "/prescription_view.html", "/doctor_patients.html", "/doctor_patient_history.html",
-                                "/checkout.html", "/admin_dashboard.html", "/admin_users.html", 
+                                "/checkout.html", "/admin_dashboard.html", "/admin_users.html",
                                 "/admin_reports.html", "/admin_settings.html", "/doctor_profile.html",
                                 "/doctor_schedule.html", "/doctor_search.html", "/profile.html").permitAll()
                         // Static resources

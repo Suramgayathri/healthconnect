@@ -7,6 +7,100 @@
     <title>Login - HealthConnect</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/login.css">
+    <style>
+        /* Scrollable body with hidden scrollbar */
+        html, body {
+            height: 100%;
+            overflow-y: auto;
+            scrollbar-width: none;        /* Firefox */
+            -ms-overflow-style: none;     /* IE / Edge */
+        }
+
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar {
+            display: none;                /* Chrome / Safari / Opera */
+        }
+
+        /* Allow auth container to grow beyond viewport */
+        .auth-container {
+            margin: auto;
+        }
+
+        /* Signup options section */
+        .signup-options {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .signup-options p {
+            color: #6B7280;
+            font-size: 0.95rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .signup-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .btn-signup-role {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .btn-signup-patient {
+            background: rgba(79, 70, 229, 0.08);
+            color: #4F46E5;
+            border-color: #4F46E5;
+        }
+
+        .btn-signup-patient:hover {
+            background: #4F46E5;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+        }
+
+        .btn-signup-doctor {
+            background: rgba(16, 185, 129, 0.08);
+            color: #10B981;
+            border-color: #10B981;
+        }
+
+        .btn-signup-doctor:hover {
+            background: #10B981;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            color: #9CA3AF;
+            font-size: 0.85rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #E5E7EB;
+        }
+    </style>
 </head>
 
 <body>
@@ -58,7 +152,7 @@
                 Sign In <i class="fas fa-arrow-right"></i>
             </button>
 
-            <!-- Optional Social Login -->
+            <!-- Social Login -->
             <div class="social-login">
                 <p>Or continue with</p>
                 <div class="social-buttons">
@@ -71,9 +165,22 @@
                 </div>
             </div>
 
-            <div class="auth-footer">
-                Don't have an account? <a href="register.html">Sign Up</a>
+            <!-- Divider -->
+            <div class="divider">Don't have an account?</div>
+
+            <!-- Dual Signup Options -->
+            <div class="signup-options">
+                <p>Choose how you'd like to join HealthConnect</p>
+                <div class="signup-buttons">
+                    <a href="/register-doctor" class="btn-signup-role btn-signup-patient">
+                        <i class="fas fa-user-injured"></i> Sign up as Patient
+                    </a>
+                    <a href="register_doctor.html" class="btn-signup-role btn-signup-doctor">
+                        <i class="fas fa-user-md"></i> Sign up as Doctor
+                    </a>
+                </div>
             </div>
+
         </form>
     </div>
 

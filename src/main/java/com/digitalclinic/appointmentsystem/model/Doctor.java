@@ -37,6 +37,9 @@ public class Doctor {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
+    @Column(name = "specialty")
+    private String specialty;
+
     @NotBlank(message = "Specialization is required")
     @Size(max = 100)
     @Column(nullable = false, length = 100)

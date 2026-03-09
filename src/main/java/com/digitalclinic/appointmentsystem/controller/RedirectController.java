@@ -33,4 +33,16 @@ public class RedirectController {
     public String redirectDoctor() {
         return "redirect:/doctor_dashboard.html";
     }
+
+
+    @GetMapping("/register-doctor")
+    public String redirectRegisterDoctor() {
+        return "redirect:/register_doctor.html";
+    }
+
+    @GetMapping("/register-patient")
+    public String redirectRegisterPatient() {
+        return "redirect:/register_patient.html";
+    }
+
 }
