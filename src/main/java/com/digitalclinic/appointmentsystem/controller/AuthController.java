@@ -17,6 +17,15 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @GetMapping("/test-hash")
+    public ResponseEntity<?> testHash(@RequestParam String password) {
+        String hash = passwordEncoder.encode(password);
+        return ResponseEntity.ok(Map.of("hash", hash, "password", password));
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody UserRegistrationDTO registrationDTO) {
         try {

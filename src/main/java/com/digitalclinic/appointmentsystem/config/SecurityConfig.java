@@ -54,11 +54,28 @@ public class SecurityConfig {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/**/*.html", "/**/*.css", "/**/*.js", "/**/*.png", "/**/*.jpg", "/**/*.jpeg",
-                                "/**/*.gif", "/**/*.svg")
-                        .permitAll()
-                        .requestMatchers("/").permitAll() // landing page
+                .authorizeHttpRequests(auth -> auth
+                        // Auth endpoints
+                        .requestMatchers("/api/auth/**").permitAll()
+                        // Redirect endpoints (without .html)
+                        .requestMatchers("/login", "/register", "/dashboard", "/admin", "/doctor").permitAll()
+                        // Static HTML pages
+                        .requestMatchers("/", "/index.html", "/login.html", "/register.html", 
+                                "/forgot_password.html", "/patient_dashboard.html", "/doctor_dashboard.html",
+                                "/appointment_booking.html", "/appointment_list.html", "/appointment_details.html",
+                                "/emergency_appointment.html", "/app_updation.html", "/medical_records.html",
+                                "/prescription_view.html", "/doctor_patients.html", "/doctor_patient_history.html",
+                                "/checkout.html", "/admin_dashboard.html", "/admin_users.html", 
+                                "/admin_reports.html", "/admin_settings.html", "/doctor_profile.html",
+                                "/doctor_schedule.html", "/doctor_search.html", "/profile.html").permitAll()
+                        // Static resources
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/webjars/**").permitAll()
+                        .requestMatchers("/*.css", "/*.js", "/*.png", "/*.jpg", "/*.jpeg", "/*.gif", "/*.svg", "/*.ico").permitAll()
+                        // WebSocket
+                        .requestMatchers("/ws/**", "/app/**", "/topic/**", "/user/**").permitAll()
+                        // Error page
+                        .requestMatchers("/error").permitAll()
+                        // All other requests need authentication
                         .anyRequest().authenticated());
 
         http.authenticationProvider(authenticationProvider());
