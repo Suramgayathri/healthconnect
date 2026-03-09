@@ -155,12 +155,15 @@ function getToastColor(type) {
 
 async function fetchUnreadCount(token) {
     try {
-        const response = await fetch('/api/notifications/unread-count', {
+        const userId = localStorage.getItem('userId');
+        if (!userId) return;
+        
+        const response = await fetch(`/api/notifications/user/${userId}/unread-count`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
-            const count = await response.json();
-            updateNotificationBadge(count, true);
+            const data = await response.json();
+            updateNotificationBadge(data.count, true);
         }
     } catch (e) {
         console.error("Error fetching unread count", e);

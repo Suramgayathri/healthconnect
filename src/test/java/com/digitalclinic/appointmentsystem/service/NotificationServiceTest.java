@@ -5,7 +5,6 @@ import com.digitalclinic.appointmentsystem.model.Notification;
 import com.digitalclinic.appointmentsystem.model.User;
 import com.digitalclinic.appointmentsystem.repository.NotificationRepository;
 import com.digitalclinic.appointmentsystem.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,7 +16,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

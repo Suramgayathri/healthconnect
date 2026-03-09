@@ -253,3 +253,136 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
 );
+
+-- 17. system_settings
+CREATE TABLE IF NOT EXISTS system_settings (
+    setting_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    setting_key VARCHAR(100) NOT NULL UNIQUE,
+    setting_value TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 18. admin_audit_logs
+CREATE TABLE IF NOT EXISTS admin_audit_logs (
+    log_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    admin_id BIGINT NOT NULL,
+    action VARCHAR(255) NOT NULL,
+    entity_type VARCHAR(100),
+    entity_id BIGINT,
+    details TEXT,
+    ip_address VARCHAR(45),
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+
+-- ============================================
+-- INSERT TEST DATA
+-- ============================================
+
+-- 1. Insert Users (5 users: 1 admin, 2 doctors, 2 patients)
+-- Password for all users: "password" (BCrypt hash)
+INSERT INTO users (email, phone, password_hash, role, is_active) VALUES
+('admin@healthconnect.com', '+1234567890', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'ADMIN', TRUE),
+('dr.smith@healthconnect.com', '+1234567891', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'DOCTOR', TRUE),
+('dr.jones@healthconnect.com', '+1234567892', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'DOCTOR', TRUE),
+('john.doe@gmail.com', '+1234567893', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'PATIENT', TRUE),
+('jane.doe@gmail.com', '+1234567894', '$2a$10$eb9x/Uypnp/JUmzNZt03ceS4DilyPgRrmXJQW3sJnykEV4yK4j54i', 'PATIENT', TRUE);
+
+-- 2. Insert Patients (2 patients)
+INSERT INTO patients (user_id, full_name, dob, gender, blood_group, address, city, state, pincode, emergency_contact, medical_history, allergies, chronic_conditions) VALUES
+(4, 'John Doe', '1985-06-15', 'MALE', 'O+', '123 Main Street', 'New York', 'NY', '10001', '+1234567895', 'No major medical history', 'None', 'None'),
+(5, 'Jane Doe', '1990-03-22', 'FEMALE', 'A+', '456 Oak Avenue', 'Los Angeles', 'CA', '90001', '+1234567896', 'Asthma since childhood', 'Penicillin', 'Asthma');
+
+-- 3. Insert Doctors (2 doctors)
+INSERT INTO doctors (user_id, full_name, specialization, qualifications, experience_years, license_number, languages_spoken, about, consultation_fee, average_rating, total_reviews, is_available) VALUES
+(2, 'Dr. John Smith', 'Cardiology', 'MBBS, MD (Cardiology)', 15, 'MED-12345', 'English, Spanish', 'Experienced cardiologist specializing in heart disease prevention and treatment', 150.00, 4.8, 120, TRUE),
+(3, 'Dr. Sarah Jones', 'General Practice', 'MBBS, MD (General Medicine)', 10, 'MED-67890', 'English, French', 'General practitioner with focus on family medicine and preventive care', 100.00, 4.9, 95, TRUE);
+
+-- 4. Insert Clinic Locations (3 locations)
+INSERT INTO clinic_locations (clinic_name, address, city, state, pincode, phone, latitude, longitude) VALUES
+('HealthConnect Main Clinic', '789 Medical Plaza', 'New York', 'NY', '10002', '+1234567800', 40.7128, -74.0060),
+('HealthConnect West Clinic', '321 Healthcare Blvd', 'Los Angeles', 'CA', '90002', '+1234567801', 34.0522, -118.2437),
+('HealthConnect Downtown', '555 Central Avenue', 'Chicago', 'IL', '60601', '+1234567802', 41.8781, -87.6298);
+
+-- 5. Insert Doctor Locations (Link doctors to clinics)
+INSERT INTO doctor_locations (doctor_id, location_id, consultation_fee, is_primary) VALUES
+(1, 1, 150.00, TRUE),
+(1, 3, 150.00, FALSE),
+(2, 2, 100.00, TRUE),
+(2, 1, 100.00, FALSE);
+
+-- 6. Insert Doctor Schedules
+INSERT INTO doctor_schedules (doctor_id, location_id, day_of_week, start_time, end_time, slot_duration, is_active) VALUES
+-- Dr. Smith schedule at Main Clinic
+(1, 1, 'MONDAY', '09:00:00', '17:00:00', 30, TRUE),
+(1, 1, 'TUESDAY', '09:00:00', '17:00:00', 30, TRUE),
+(1, 1, 'WEDNESDAY', '09:00:00', '17:00:00', 30, TRUE),
+(1, 1, 'THURSDAY', '09:00:00', '17:00:00', 30, TRUE),
+(1, 1, 'FRIDAY', '09:00:00', '13:00:00', 30, TRUE),
+-- Dr. Jones schedule at West Clinic
+(2, 2, 'MONDAY', '10:00:00', '18:00:00', 30, TRUE),
+(2, 2, 'WEDNESDAY', '10:00:00', '18:00:00', 30, TRUE),
+(2, 2, 'FRIDAY', '10:00:00', '18:00:00', 30, TRUE),
+(2, 2, 'SATURDAY', '09:00:00', '13:00:00', 30, TRUE);
+
+-- 7. Insert Sample Appointments
+INSERT INTO appointments (booking_reference, patient_id, doctor_id, location_id, appointment_date, appointment_time, consultation_type, reason_for_visit, status, is_emergency, consultation_fee, payment_status) VALUES
+('APT-2026-001', 1, 1, 1, '2026-03-15', '10:00:00', 'IN_PERSON', 'Regular checkup', 'SCHEDULED', FALSE, 150.00, 'PENDING'),
+('APT-2026-002', 2, 2, 2, '2026-03-16', '14:00:00', 'VIDEO', 'Follow-up consultation', 'SCHEDULED', FALSE, 100.00, 'PAID'),
+('APT-2026-003', 1, 2, 1, '2026-03-10', '11:00:00', 'IN_PERSON', 'Flu symptoms', 'COMPLETED', FALSE, 100.00, 'PAID');
+
+-- 8. Insert Patient Vitals
+INSERT INTO patient_vitals (patient_id, appointment_id, blood_pressure, heart_rate, temperature, weight, height, bmi, oxygen_saturation) VALUES
+(1, 3, '120/80', 72, 98.6, 75.5, 175.0, 24.7, 98),
+(2, NULL, '118/78', 68, 98.4, 62.0, 165.0, 22.8, 99);
+
+-- 9. Insert Prescriptions
+INSERT INTO prescriptions (patient_id, doctor_id, appointment_id, prescription_date, diagnosis, instructions, follow_up_required, follow_up_date) VALUES
+(1, 2, 3, '2026-03-10', 'Viral Flu', 'Take medications as prescribed. Rest and drink plenty of fluids.', TRUE, '2026-03-17');
+
+-- 10. Insert Prescription Medications
+INSERT INTO prescription_medications (prescription_id, medicine_name, dosage, frequency, duration, instructions) VALUES
+(1, 'Paracetamol', '500mg', 'Three times daily', '5 days', 'Take after meals'),
+(1, 'Vitamin C', '1000mg', 'Once daily', '7 days', 'Take with water');
+
+-- 11. Insert Lab Tests
+INSERT INTO lab_tests (appointment_id, patient_id, test_name, test_type, ordered_date, status) VALUES
+(3, 1, 'Complete Blood Count', 'Blood Test', '2026-03-10', 'ORDERED'),
+(NULL, 2, 'Lipid Profile', 'Blood Test', '2026-03-12', 'SAMPLE_COLLECTED');
+
+-- 12. Insert Medical Records
+INSERT INTO medical_records (patient_id, record_type, record_name, file_url, uploaded_by) VALUES
+(1, 'PRESCRIPTION', 'Flu Prescription - March 2026', '/uploads/prescriptions/prescription_1.pdf', 3),
+(2, 'LAB_REPORT', 'Blood Test Results', '/uploads/lab_reports/lab_test_2.pdf', 2);
+
+-- 13. Insert Payments
+INSERT INTO payments (appointment_id, patient_id, amount, payment_method, transaction_id, status, payment_date) VALUES
+(2, 2, 100.00, 'CREDIT_CARD', 'TXN-2026-001', 'SUCCESS', '2026-03-14 10:30:00'),
+(3, 1, 100.00, 'DEBIT_CARD', 'TXN-2026-002', 'SUCCESS', '2026-03-10 11:45:00');
+
+-- 14. Insert Notifications
+INSERT INTO notifications (user_id, appointment_id, notification_type, channel, message, status, sent_at) VALUES
+(4, 1, 'REMINDER', 'EMAIL', 'Reminder: You have an appointment with Dr. John Smith on March 15, 2026 at 10:00 AM', 'SENT', '2026-03-14 09:00:00'),
+(5, 2, 'CONFIRMATION', 'SMS', 'Your appointment with Dr. Sarah Jones has been confirmed for March 16, 2026 at 2:00 PM', 'DELIVERED', '2026-03-14 15:30:00'),
+(4, 3, 'CONFIRMATION', 'IN_APP', 'Your appointment has been completed. Please provide feedback.', 'READ', '2026-03-10 12:00:00');
+
+-- 15. Insert Reviews
+INSERT INTO reviews (patient_id, doctor_id, appointment_id, rating, review_text, is_verified) VALUES
+(1, 2, 3, 5, 'Excellent doctor! Very thorough and caring. Highly recommend.', TRUE);
+
+-- 16. Insert System Settings (for admin)
+INSERT INTO system_settings (setting_key, setting_value, description) VALUES
+('appointment_slot_duration', '30', 'Default appointment slot duration in minutes'),
+('max_appointments_per_day', '20', 'Maximum appointments per doctor per day'),
+('consultation_fee_currency', 'USD', 'Currency for consultation fees'),
+('enable_video_consultation', 'true', 'Enable video consultation feature'),
+('emergency_booking_enabled', 'true', 'Enable emergency appointment booking');
+
+-- 17. Insert Admin Audit Logs
+INSERT INTO admin_audit_logs (admin_id, action, entity_type, entity_id, details) VALUES
+(1, 'USER_CREATED', 'USER', 2, 'Created doctor account for Dr. John Smith'),
+(1, 'USER_CREATED', 'USER', 3, 'Created doctor account for Dr. Sarah Jones'),
+(1, 'SYSTEM_SETTINGS_UPDATED', 'SETTINGS', NULL, 'Updated appointment slot duration to 30 minutes');

@@ -2,12 +2,19 @@ document.addEventListener('DOMContentLoaded', fetchDoctors);
 
         async function fetchDoctors() {
             const container = document.getElementById('doctorsContainer');
-            const keyword = document.getElementById('keywordSearch').value;
-            const specialty = document.getElementById('specialtySelect').value;
+            const keyword = document.getElementById('keywordSearch')?.value || '';
+            const specialty = document.getElementById('specialtySelect')?.value || '';
 
             container.innerHTML = '<div id="loading"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i> Loading doctors...</div>';
 
             try {
+                // Get JWT token
+                const token = localStorage.getItem('token');
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
                 // Construct URL with optional query params
                 let url = '/api/doctors/search';
                 const params = new URLSearchParams();
@@ -15,7 +22,12 @@ document.addEventListener('DOMContentLoaded', fetchDoctors);
                 if (specialty) params.append('specialty', specialty);
                 if (params.toString()) url += '?' + params.toString();
 
-                const response = await fetch(url);
+                const response = await fetch(url, { headers });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
 
                 container.innerHTML = '';

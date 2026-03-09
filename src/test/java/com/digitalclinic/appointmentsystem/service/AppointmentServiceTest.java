@@ -1,6 +1,5 @@
 package com.digitalclinic.appointmentsystem.service;
 
-import com.digitalclinic.appointmentsystem.dto.AppointmentRequestDTO;
 import com.digitalclinic.appointmentsystem.dto.AppointmentDTO;
 import com.digitalclinic.appointmentsystem.dto.EmergencyBookingDTO;
 import com.digitalclinic.appointmentsystem.model.*;

@@ -4,7 +4,6 @@ import com.digitalclinic.appointmentsystem.dto.PrescriptionDTO;
 import com.digitalclinic.appointmentsystem.model.Doctor;
 import com.digitalclinic.appointmentsystem.model.Patient;
 import com.digitalclinic.appointmentsystem.model.Prescription;
-import com.digitalclinic.appointmentsystem.model.User;
 import com.digitalclinic.appointmentsystem.repository.AppointmentRepository;
 import com.digitalclinic.appointmentsystem.repository.DoctorRepository;
 import com.digitalclinic.appointmentsystem.repository.PatientRepository;
