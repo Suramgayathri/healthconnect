@@ -51,8 +51,10 @@ public class AdminController {
         try {
             adminUserService.approveDoctor(doctorId);
             return ResponseEntity.ok().body(java.util.Map.of("message", "Doctor approved successfully"));
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Internal server error: " + e.getMessage()));
         }
     }
 
@@ -61,8 +63,10 @@ public class AdminController {
         try {
             adminUserService.rejectDoctor(doctorId);
             return ResponseEntity.ok().body(java.util.Map.of("message", "Doctor rejected successfully"));
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Internal server error: " + e.getMessage()));
         }
     }
 }

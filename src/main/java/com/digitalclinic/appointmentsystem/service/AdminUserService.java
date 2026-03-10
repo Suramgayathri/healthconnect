@@ -16,7 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
 
 @Service
-@RequiredArgsConstructor 
+@RequiredArgsConstructor
+@Transactional
 public class AdminUserService {
 
     private final UserRepository userRepository;
@@ -82,8 +83,8 @@ public class AdminUserService {
     public void approveDoctor(Long doctorId) {
         Doctor doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
-        doctor.setIsVerified(true);
-        doctor.setIsAvailable(true);
+        doctor.setVerified(true);
+        doctor.setAvailable(true);
         doctorRepository.save(doctor);
     }
 
@@ -91,8 +92,8 @@ public class AdminUserService {
     public void rejectDoctor(Long doctorId) {
         Doctor doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
-        doctor.setIsVerified(false);
-        doctor.setIsAvailable(false);
+        doctor.setVerified(false);
+        doctor.setAvailable(false);
         doctorRepository.save(doctor);
     }
 }

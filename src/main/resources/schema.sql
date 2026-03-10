@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS doctors (
     doctor_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL UNIQUE,
     full_name VARCHAR(100) NOT NULL,
+    specialty VARCHAR(100),
     specialization VARCHAR(100) NOT NULL,
     qualifications VARCHAR(255),
     experience_years INT,
@@ -51,6 +52,9 @@ CREATE TABLE IF NOT EXISTS doctors (
     average_rating DECIMAL(3, 2) DEFAULT 0.00,
     total_reviews INT DEFAULT 0,
     is_available BOOLEAN DEFAULT TRUE,
+    is_verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
@@ -301,9 +305,9 @@ INSERT INTO patients (user_id, full_name, dob, gender, blood_group, address, cit
 (5, 'Jane Doe', '1990-03-22', 'FEMALE', 'A+', '456 Oak Avenue', 'Los Angeles', 'CA', '90001', '+1234567896', 'Asthma since childhood', 'Penicillin', 'Asthma');
 
 -- 3. Insert Doctors (2 doctors)
-INSERT INTO doctors (user_id, full_name, specialization, qualifications, experience_years, license_number, languages_spoken, about, consultation_fee, average_rating, total_reviews, is_available) VALUES
-(2, 'Dr. John Smith', 'Cardiology', 'MBBS, MD (Cardiology)', 15, 'MED-12345', 'English, Spanish', 'Experienced cardiologist specializing in heart disease prevention and treatment', 150.00, 4.8, 120, TRUE),
-(3, 'Dr. Sarah Jones', 'General Practice', 'MBBS, MD (General Medicine)', 10, 'MED-67890', 'English, French', 'General practitioner with focus on family medicine and preventive care', 100.00, 4.9, 95, TRUE);
+INSERT INTO doctors (user_id, full_name, specialty, specialization, qualifications, experience_years, license_number, languages_spoken, about, consultation_fee, average_rating, total_reviews, is_available, is_verified) VALUES
+(2, 'Dr. John Smith', 'Cardiology', 'Cardiology', 'MBBS, MD (Cardiology)', 15, 'MED-12345', 'English, Spanish', 'Experienced cardiologist specializing in heart disease prevention and treatment', 150.00, 4.8, 120, TRUE, TRUE),
+(3, 'Dr. Sarah Jones', 'General Practice', 'General Practice', 'MBBS, MD (General Medicine)', 10, 'MED-67890', 'English, French', 'General practitioner with focus on family medicine and preventive care', 100.00, 4.9, 95, TRUE, TRUE);
 
 -- 4. Insert Clinic Locations (3 locations)
 INSERT INTO clinic_locations (clinic_name, address, city, state, pincode, phone, latitude, longitude) VALUES

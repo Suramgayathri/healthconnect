@@ -223,12 +223,14 @@ async function approveDoctor(doctorId) {
             headers: authHeader()
         });
 
+        const data = await response.json();
+
         if (response.ok) {
             showToast('Doctor approved successfully!', 'success');
             loadUsers();
         } else {
-            const error = await response.json();
-            showToast(error.error || 'Failed to approve doctor', 'error');
+            console.error('Approval error:', data);
+            showToast(data.error || 'Failed to approve doctor', 'error');
         }
     } catch (error) {
         console.error('Error approving doctor:', error);
