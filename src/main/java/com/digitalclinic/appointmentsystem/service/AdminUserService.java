@@ -83,8 +83,8 @@ public class AdminUserService {
     public void approveDoctor(Long doctorId) {
         Doctor doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
-        doctor.setVerified(true);
-        doctor.setAvailable(true);
+        doctor.setIsVerified(true);
+        doctor.setIsAvailable(true);
         doctorRepository.save(doctor);
     }
 
@@ -92,8 +92,8 @@ public class AdminUserService {
     public void rejectDoctor(Long doctorId) {
         Doctor doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
-        doctor.setVerified(false);
-        doctor.setAvailable(false);
+        doctor.setIsVerified(false);
+        doctor.setIsAvailable(false);
         doctorRepository.save(doctor);
     }
 }
