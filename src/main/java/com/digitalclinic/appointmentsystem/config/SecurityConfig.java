@@ -62,6 +62,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/doctors/available").permitAll()
                         .requestMatchers("/api/doctors/search").permitAll()
                         .requestMatchers("/api/doctors/hospital/**").permitAll()
+                        .requestMatchers("/api/doctors/{id}").permitAll()
+                        .requestMatchers("/api/doctors/specialization/**").permitAll()
+                        .requestMatchers("/api/doctors/top-rated").permitAll()
                         // Redirect endpoints (without .html)
                         .requestMatchers("/login", "/register", "/dashboard", "/admin", "/doctor",
                                 "/register-patient", "/register-doctor").permitAll()
