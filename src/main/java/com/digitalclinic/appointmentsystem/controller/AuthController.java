@@ -10,6 +10,9 @@ import com.digitalclinic.appointmentsystem.repository.DoctorRepository;
 import com.digitalclinic.appointmentsystem.repository.PatientRepository;
 import com.digitalclinic.appointmentsystem.repository.UserRepository;
 import com.digitalclinic.appointmentsystem.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -24,6 +27,8 @@ import java.util.Optional;
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class AuthController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private UserService userService;
@@ -149,12 +154,32 @@ public class AuthController {
                                            @RequestParam(value = "consultationFee", required = false, defaultValue = "0") Double consultationFee,
                                            @RequestParam(value = "about", required = false) String about,
                                            @RequestParam(value = "profilePhoto", required = false) org.springframework.web.multipart.MultipartFile profilePhoto) {
+        logger.debug("Doctor registration attempt - email: {}, specialization: {}", email, specialization);
+        
+        // Validate required fields
+        if (fullName == null || fullName.trim().isEmpty()) {
+            logger.error("Doctor registration failed - full name is required");
+            return ResponseEntity.badRequest().body(Map.of("error", "Full name is required"));
+        }
+        
+        if (specialization == null || specialization.trim().isEmpty()) {
+            logger.error("Doctor registration failed - specialization is required");
+            return ResponseEntity.badRequest().body(Map.of("error", "Specialization is required"));
+        }
+        
+        if (licenseNumber == null || licenseNumber.trim().isEmpty()) {
+            logger.error("Doctor registration failed - license number is required");
+            return ResponseEntity.badRequest().body(Map.of("error", "License number is required"));
+        }
+
         try {
             // Check if email or phone already exists
             if (userRepository.existsByEmail(email)) {
+                logger.error("Doctor registration failed - email already in use: {}", email);
                 return ResponseEntity.badRequest().body(Map.of("error", "Email is already in use!"));
             }
             if (userRepository.existsByPhone(phone)) {
+                logger.error("Doctor registration failed - phone already in use: {}", phone);
                 return ResponseEntity.badRequest().body(Map.of("error", "Phone number is already in use!"));
             }
 
@@ -176,6 +201,7 @@ public class AuthController {
                     .isActive(true)
                     .build();
             user = userRepository.save(user);
+            logger.info("User created for doctor: {}", email);
 
             // Handle profile photo upload (optional - save to uploads folder or just store filename)
             String photoPath = null;
@@ -189,25 +215,27 @@ public class AuthController {
             // Create doctor profile
             Doctor doctor = Doctor.builder()
                     .user(user)
-                    .fullName(fullName)
-                    .specialty(specialization) // Map to specialty column
-                    .specialization(specialization) // Map to specialization column
-                    .licenseNumber(licenseNumber)
-                    .qualifications(qualifications)
+                    .fullName(fullName.trim())
+                    .specialty(specialization.trim()) // Map to specialty column
+                    .specialization(specialization.trim()) // Map to specialization column
+                    .licenseNumber(licenseNumber.trim())
+                    .qualifications(qualifications != null ? qualifications.trim() : null)
                     .experienceYears(experienceYears)
-                    .languagesSpoken(languagesSpoken)
+                    .languagesSpoken(languagesSpoken != null ? languagesSpoken.trim() : null)
                     .consultationFee(consultationFee != null ? java.math.BigDecimal.valueOf(consultationFee) : null)
-                    .about(about)
+                    .about(about != null ? about.trim() : null)
                     .profilePhoto(photoPath)
                     .isVerified(false) // Doctors need admin verification
                     .isAvailable(false) // Not available until verified
                     .build();
             doctorRepository.save(doctor);
+            logger.info("Doctor profile created: id={}, specialization={}", doctor.getId(), specialization);
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Doctor registration successful! Your account is pending verification.");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            logger.error("Doctor registration failed for email {}: {}", email, e.getMessage(), e);
             return ResponseEntity.badRequest().body(Map.of("error", "Registration failed: " + e.getMessage()));
         }
     }

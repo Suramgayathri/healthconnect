@@ -5,77 +5,95 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Find Doctors - HealthConnect</title>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Page CSS -->
     <link rel="stylesheet" href="/css/doctor_search.css">
 </head>
 
 <body>
+
+    <!-- NAVBAR -->
     <nav class="navbar">
-        <a href="index.html" class="logo">
+        <a href="patient_dashboard.html" class="logo">
             <i class="fas fa-heartbeat"></i> HealthConnect
         </a>
-        <a href="patient_dashboard.html"
-            style="color: var(--primary); text-decoration: none; font-weight: 600;">Dashboard</a>
+        <div class="nav-links">
+            <a href="patient_dashboard.html"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+            <a href="appointment_list.html"><i class="fas fa-calendar"></i> <span>Appointments</span></a>
+            <a href="medical_records.html"><i class="fas fa-file-medical"></i> <span>Records</span></a>
+            <button onclick="logout()" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+            </button>
+        </div>
     </nav>
 
-    <div class="search-header">
-        <h1>Find the Right Doctor for You</h1>
-        <div class="search-bar-container">
-            <div class="search-input">
-                <i class="fas fa-search"></i>
-                <input type="text" id="keywordSearch" placeholder="Search doctors, sub-specialties...">
-            </div>
-            <div class="search-input">
-                <i class="fas fa-stethoscope"></i>
-                <select id="specialtySelect">
-                    <option value="">All Specialties</option>
-                    <option value="Cardiologist">Cardiologist</option>
-                    <option value="Dermatologist">Dermatologist</option>
-                    <option value="Neurologist">Neurologist</option>
-                    <option value="Pediatrician">Pediatrician</option>
-                    <option value="General Physician">General Physician</option>
-                </select>
-            </div>
-            <button class="btn-search" onclick="fetchDoctors()">Search</button>
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1><i class="fas fa-user-md"></i> Find a Doctor</h1>
+            <p>Search from our network of verified medical professionals</p>
         </div>
     </div>
 
-    <div class="page-content">
-        <aside class="filters">
-            <div class="filter-section">
-                <h4>Availability</h4>
-                <label class="filter-label"><input type="checkbox"> Available Today</label>
-                <label class="filter-label"><input type="checkbox"> Next 3 Days</label>
-                <label class="filter-label"><input type="checkbox"> Weekends</label>
-            </div>
-            <div class="filter-section">
-                <h4>Gender</h4>
-                <label class="filter-label"><input type="checkbox"> Male</label>
-                <label class="filter-label"><input type="checkbox"> Female</label>
-            </div>
-            <div class="filter-section">
-                <h4>Consultation Fee</h4>
-                <label class="filter-label"><input type="radio" name="fee"> Below $50</label>
-                <label class="filter-label"><input type="radio" name="fee"> $50 - $100</label>
-                <label class="filter-label"><input type="radio" name="fee"> Above $100</label>
-            </div>
-        </aside>
+    <!-- SEARCH AND FILTERS -->
+    <div class="search-section">
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by doctor name or specialization...">
+        </div>
 
-        <main>
-            <div class="doctors-grid" id="doctorsContainer">
-                <!-- Data populated here via JS -->
-            </div>
-        </main>
+        <div class="filters">
+            <select id="specializationFilter">
+                <option value="">All Specializations</option>
+                <option value="cardiology">Cardiology</option>
+                <option value="dermatology">Dermatology</option>
+                <option value="general">General Medicine</option>
+                <option value="gynecology">Gynecology</option>
+                <option value="neurology">Neurology</option>
+                <option value="oncology">Oncology</option>
+                <option value="orthopedics">Orthopedics</option>
+                <option value="pediatrics">Pediatrics</option>
+                <option value="psychiatry">Psychiatry</option>
+                <option value="surgery">Surgery</option>
+            </select>
+
+            <select id="availabilityFilter">
+                <option value="">All Doctors</option>
+                <option value="available">Available Now</option>
+                <option value="unavailable">Unavailable</option>
+            </select>
+
+            <select id="sortFilter">
+                <option value="">Sort By</option>
+                <option value="rating">Highest Rated</option>
+                <option value="experience">Most Experienced</option>
+                <option value="fee_low">Fee: Low to High</option>
+                <option value="fee_high">Fee: High to Low</option>
+            </select>
+        </div>
+
+        <p class="result-count" id="doctorCount"></p>
     </div>
 
-    <!-- WebSocket Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-    <!-- Application Scripts -->
+    <!-- LOADING STATE -->
+    <div id="loadingState" style="text-align: center; padding: 3rem; display: none;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #4F46E5;"></i>
+        <p style="margin-top: 1rem; color: #6B7280;">Loading doctors...</p>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div id="emptyState" style="text-align: center; padding: 3rem; display: none;">
+        <i class="fas fa-user-md" style="font-size: 3rem; color: #D1D5DB;"></i>
+        <p style="margin-top: 1rem; color: #6B7280; font-size: 1.1rem;">No doctors available</p>
+    </div>
+
+    <!-- DOCTORS GRID -->
+    <div class="doctors-container">
+        <div class="doctors-grid" id="doctorsGrid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
     <script src="/js/notification_handler.js"></script>
     <script src="/js/doctor_search.js"></script>
 </body>

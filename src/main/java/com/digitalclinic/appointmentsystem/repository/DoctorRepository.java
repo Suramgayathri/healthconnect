@@ -41,6 +41,9 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     // Search by name
     List<Doctor> findByFullNameContainingIgnoreCase(String name);
 
+    // Search by hospital
+    List<Doctor> findByHospitalId(Long hospitalId);
+
     // Top rated doctors
     @Query("SELECT d FROM Doctor d WHERE d.averageRating >= :minRating " +
             "ORDER BY d.averageRating DESC, d.totalReviews DESC")

@@ -33,17 +33,27 @@ public class Doctor {
     private User user;
 
     @NotBlank(message = "Full name is required")
-    @Size(max = 100)
+    @Size(max = 100, message = "Full name must be less than 100 characters")
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
+    @Size(max = 100, message = "Specialty must be less than 100 characters")
     @Column(name = "specialty")
     private String specialty;
 
     @NotBlank(message = "Specialization is required")
-    @Size(max = 100)
+    @Size(max = 100, message = "Specialization must be less than 100 characters")
     @Column(nullable = false, length = 100)
     private String specialization;
+
+    @Column(name = "hospital_id")
+    private Long hospitalId;
+
+    @Column(name = "hospital_name", length = 100)
+    private String hospitalName;
+
+    @Column(name = "hospital_address", columnDefinition = "TEXT")
+    private String hospitalAddress;
 
     @Column(columnDefinition = "TEXT")
     private String qualifications;

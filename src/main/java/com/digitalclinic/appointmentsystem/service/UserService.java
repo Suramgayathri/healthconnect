@@ -89,6 +89,10 @@ public class UserService {
                     .gender(registrationDTO.getGender())
                     .bloodGroup(registrationDTO.getBloodGroup())
                     .dob(dob)
+                    .address(registrationDTO.getAddress())
+                    .city(registrationDTO.getCity())
+                    .state(registrationDTO.getState())
+                    .pincode(registrationDTO.getPincode())
                     .build();
             patientRepository.save(patient);
         } else if (registrationDTO.getRole() == Role.DOCTOR) {

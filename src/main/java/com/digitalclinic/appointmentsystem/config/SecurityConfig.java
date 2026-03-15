@@ -57,6 +57,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
+                        // Public API endpoints (no auth required)
+                        .requestMatchers("/api/hospitals/**").permitAll()
+                        .requestMatchers("/api/doctors/available").permitAll()
+                        .requestMatchers("/api/doctors/search").permitAll()
+                        .requestMatchers("/api/doctors/hospital/**").permitAll()
                         // Redirect endpoints (without .html)
                         .requestMatchers("/login", "/register", "/dashboard", "/admin", "/doctor",
                                 "/register-patient", "/register-doctor").permitAll()

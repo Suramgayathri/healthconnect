@@ -7,6 +7,21 @@
     <title>Patient Registration - HealthConnect</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/register.css">
+    <style>
+        /* Address section styling */
+        .address-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .address-section h4 {
+            color: var(--primary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 
 <body>
@@ -103,6 +118,43 @@
                                 <option value="O+">O+</option>
                                 <option value="O-">O-</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Section -->
+                <div class="address-section">
+                    <h4><i class="fas fa-map-marker-alt"></i> Address Details</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Address</label>
+                            <div class="input-group">
+                                <i class="fas fa-home" style="top: 1.1rem; transform: none;"></i>
+                                <input type="text" class="form-control" id="address" placeholder="House number, street address">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>City</label>
+                            <div class="input-group">
+                                <i class="fas fa-city" style="top: 1.1rem; transform: none;"></i>
+                                <input type="text" class="form-control" id="city" placeholder="City">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>State</label>
+                            <div class="input-group">
+                                <i class="fas fa-flag" style="top: 1.1rem; transform: none;"></i>
+                                <input type="text" class="form-control" id="state" placeholder="State">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Pincode</label>
+                            <div class="input-group">
+                                <i class="fas fa-postage" style="top: 1.1rem; transform: none;"></i>
+                                <input type="text" class="form-control" id="pincode" placeholder="Pincode/ZIP">
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -374,3 +374,124 @@
                 transform: rotate(360deg);
             }
         }
+/* Role selection cards for register.html */
+.role-selection-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.role-choice-card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border-radius: 16px;
+    text-decoration: none;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.patient-card {
+    background: rgba(79, 70, 229, 0.05);
+    border-color: rgba(79, 70, 229, 0.2);
+}
+
+.patient-card:hover {
+    background: rgba(79, 70, 229, 0.1);
+    border-color: #4F46E5;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.2);
+}
+
+.doctor-card {
+    background: rgba(16, 185, 129, 0.05);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.doctor-card:hover {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: #10B981;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
+}
+
+.role-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+}
+
+.patient-card .role-icon {
+    background: rgba(79, 70, 229, 0.1);
+    color: #4F46E5;
+}
+
+.doctor-card .role-icon {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+}
+
+.role-info {
+    flex: 1;
+}
+
+.role-info h4 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.3rem;
+}
+
+.role-info p {
+    font-size: 0.85rem;
+    color: #6B7280;
+    margin-bottom: 0.75rem;
+}
+
+.role-info ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.role-info ul li {
+    font-size: 0.8rem;
+    color: #6B7280;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.patient-card .role-info ul li i {
+    color: #4F46E5;
+}
+
+.doctor-card .role-info ul li i {
+    color: #10B981;
+}
+
+.role-arrow {
+    font-size: 1rem;
+    color: #9CA3AF;
+    transition: all 0.3s ease;
+}
+
+.patient-card:hover .role-arrow {
+    color: #4F46E5;
+    transform: translateX(4px);
+}
+
+.doctor-card:hover .role-arrow {
+    color: #10B981;
+    transform: translateX(4px);
+}

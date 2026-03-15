@@ -101,7 +101,11 @@ document.getElementById('registerPatientForm').addEventListener('submit', async 
         password:   password,
         dob:        document.getElementById('dob').value        || null,
         gender:     document.getElementById('gender').value     || null,
-        bloodGroup: document.getElementById('bloodGroup').value || null
+        bloodGroup: document.getElementById('bloodGroup').value || null,
+        address:    document.getElementById('address').value    || null,
+        city:       document.getElementById('city').value       || null,
+        state:      document.getElementById('state').value      || null,
+        pincode:    document.getElementById('pincode').value    || null
     };
 
     try {

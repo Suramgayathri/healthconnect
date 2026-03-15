@@ -12,7 +12,7 @@ import java.time.LocalTime;
 
 @Entity
 @Table(name = "doctor_locations", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "doctor_id", "location_id" })
+        @UniqueConstraint(columnNames = { "doctor_id", "location_id", "hospital_id" })
 })
 @Data
 @NoArgsConstructor
@@ -32,6 +32,10 @@ public class DoctorLocation {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", nullable = false)
     private ClinicLocation location;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hospital_id")
+    private Hospital hospital;
 
     @Column(name = "consultation_fee", precision = 10, scale = 2)
     private BigDecimal consultationFee;
