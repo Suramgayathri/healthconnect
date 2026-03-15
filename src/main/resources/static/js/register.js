@@ -11,6 +11,51 @@ function selectRole(role, element) {
             }
         }
 
+        let otpTimerInterval = null;
+
+        function startOtpTimer() {
+            let timeLeft = 120; // 2 minutes in seconds
+            const timerDisplay = document.getElementById('timerDisplay');
+            const resendLink = document.getElementById('resendLink');
+            
+            // Disable resend link initially
+            resendLink.style.pointerEvents = 'none';
+            resendLink.style.opacity = '0.5';
+            
+            // Clear any existing timer
+            if (otpTimerInterval) {
+                clearInterval(otpTimerInterval);
+            }
+            
+            otpTimerInterval = setInterval(() => {
+                timeLeft--;
+                
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(otpTimerInterval);
+                    timerDisplay.textContent = 'Expired';
+                    timerDisplay.style.color = '#EF4444';
+                    
+                    // Enable resend link
+                    resendLink.style.pointerEvents = 'auto';
+                    resendLink.style.opacity = '1';
+                    resendLink.textContent = 'OTP Expired - Click to Resend';
+                    
+                    // Disable OTP inputs
+                    document.querySelectorAll('.otp-input').forEach(input => {
+                        input.disabled = true;
+                        input.style.opacity = '0.5';
+                    });
+                } else if (timeLeft <= 30) {
+                    // Change color to red when less than 30 seconds
+                    timerDisplay.style.color = '#EF4444';
+                }
+            }, 1000);
+        }
+
         function togglePassword() {
             const pwdInput = document.getElementById('password');
             const eyeIcon = document.querySelector('.fa-eye');
@@ -61,10 +106,88 @@ function selectRole(role, element) {
                 return;
             }
 
-            // Show OTP section simulate OTP sent
-            document.getElementById('verifyBtn').style.display = 'none';
-            document.getElementById('otpSection').style.display = 'block';
-            document.getElementById('registerBtn').style.display = 'flex';
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+
+            // Disable button and show loading
+            const verifyBtn = document.getElementById('verifyBtn');
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<div class="loader"></div> Sending OTP...';
+
+            // Call backend to send OTP
+            fetch('/api/auth/send-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, phone: phone })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    verifyBtn.disabled = false;
+                    verifyBtn.innerHTML = 'Send OTP';
+                } else {
+                    alert('OTP sent to your email: ' + email);
+                    // Show OTP section
+                    verifyBtn.style.display = 'none';
+                    document.getElementById('otpSection').style.display = 'block';
+                    document.getElementById('registerBtn').style.display = 'flex';
+                    
+                    // Start countdown timer
+                    startOtpTimer();
+                }
+            })
+            .catch(error => {
+                alert('Failed to send OTP. Please try again.');
+                verifyBtn.disabled = false;
+                verifyBtn.innerHTML = 'Send OTP';
+            });
+        }
+
+        function resendOtp() {
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+
+            // Clear OTP inputs and re-enable them
+            document.querySelectorAll('.otp-input').forEach(input => {
+                input.value = '';
+                input.disabled = false;
+                input.style.opacity = '1';
+            });
+            
+            // Reset timer display
+            const timerDisplay = document.getElementById('timerDisplay');
+            timerDisplay.style.color = 'var(--primary)';
+            
+            const resendLink = document.getElementById('resendLink');
+            resendLink.textContent = 'Resending...';
+            resendLink.style.pointerEvents = 'none';
+
+            // Call backend to resend OTP
+            fetch('/api/auth/send-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, phone: phone })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    resendLink.textContent = 'Resend OTP';
+                    resendLink.style.pointerEvents = 'auto';
+                } else {
+                    alert('OTP resent to your email: ' + email);
+                    resendLink.textContent = 'Resend OTP';
+                    
+                    // Restart timer
+                    startOtpTimer();
+                }
+            })
+            .catch(error => {
+                alert('Failed to resend OTP. Please try again.');
+                resendLink.textContent = 'Resend OTP';
+                resendLink.style.pointerEvents = 'auto';
+            });
         }
 
         function moveToNext(current, event) {
@@ -80,14 +203,23 @@ function selectRole(role, element) {
         document.getElementById('registerForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
+            // Check if timer expired
+            const timerDisplay = document.getElementById('timerDisplay');
+            if (timerDisplay.textContent === 'Expired') {
+                alert("OTP has expired. Please click 'Resend OTP' to get a new code.");
+                return;
+            }
+
             // Combine DOM validation + OTP check
             const inputs = document.querySelectorAll('.otp-input');
             let otp = '';
             inputs.forEach(input => otp += input.value);
-            if (otp.length < 4) {
-                alert("Please enter a valid 4-digit OTP");
+            if (otp.length < 6) {
+                alert("Please enter a valid 6-digit OTP");
                 return;
             }
+
+            const email = document.getElementById('email').value;
 
             // Show loading
             document.getElementById('btnText').style.display = 'none';
@@ -95,20 +227,37 @@ function selectRole(role, element) {
             document.getElementById('registerBtn').disabled = true;
             document.getElementById('errorMessage').style.display = 'none';
 
-            const role = document.querySelector('input[name="role"]:checked').value;
-
-            const payload = {
-                fullName: document.getElementById('fullName').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                password: document.getElementById('password').value,
-                role: role,
-                dob: document.getElementById('dob') ? document.getElementById('dob').value : null,
-                gender: document.getElementById('gender') ? document.getElementById('gender').value : null,
-                bloodGroup: document.getElementById('bloodGroup') ? document.getElementById('bloodGroup').value : null
-            };
-
+            // First verify OTP
             try {
+                const verifyResponse = await fetch('/api/auth/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, otpCode: otp })
+                });
+
+                const verifyData = await verifyResponse.json();
+
+                if (!verifyResponse.ok || !verifyData.verified) {
+                    document.getElementById('errorMessage').innerText = verifyData.error || 'Invalid OTP. Please try again.';
+                    document.getElementById('errorMessage').style.display = 'block';
+                    resetBtn();
+                    return;
+                }
+
+                // OTP verified, proceed with registration
+                const role = document.querySelector('input[name="role"]:checked').value;
+
+                const payload = {
+                    fullName: document.getElementById('fullName').value,
+                    email: email,
+                    phone: document.getElementById('phone').value,
+                    password: document.getElementById('password').value,
+                    role: role,
+                    dob: document.getElementById('dob') ? document.getElementById('dob').value : null,
+                    gender: document.getElementById('gender') ? document.getElementById('gender').value : null,
+                    bloodGroup: document.getElementById('bloodGroup') ? document.getElementById('bloodGroup').value : null
+                };
+
                 const response = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: {

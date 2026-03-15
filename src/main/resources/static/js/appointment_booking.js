@@ -27,10 +27,7 @@ const urlParams = new URLSearchParams(window.location.search);
                     document.getElementById('docName').textContent = doc.fullName;
                     document.getElementById('docSpecialty').textContent = doc.specialization;
                     document.getElementById('docFee').textContent = `₹${doc.consultationFee} / Consultation`;
-                    // Use initials instead of photo to avoid 404 errors
-                    const name = doc.fullName || 'Doctor';
-                    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                    document.getElementById('docImg').src = `https://ui-avatars.com/api/?name=${initials}&background=4F46E5&color=fff`;
+                    if (doc.profilePhoto) document.getElementById('docImg').src = doc.profilePhoto;
 
                     // Populate locations
                     const locSelect = document.getElementById('locationSelect');

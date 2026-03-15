@@ -13,12 +13,16 @@ public interface HospitalRepository extends JpaRepository<Hospital, Long> {
 
     List<Hospital> findByIsActiveTrue();
 
-    List<Hospital> findByCityIgnoreCase(String city);
+    List<Hospital> findByCityIgnoreCaseAndIsActiveTrue(String city);
 
-    @Query("SELECT h FROM Hospital h WHERE h.isActive = true AND " +
-            "(LOWER(h.hospitalName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-            "LOWER(h.city) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-            "LOWER(h.hospitalAddress) LIKE LOWER(CONCAT('%', :query, '%')))")
+    @Query("SELECT h FROM Hospital h WHERE " +
+            "h.isActive = true AND " +
+            "(LOWER(h.hospitalName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(h.city) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(h.hospitalAddress) LIKE LOWER(CONCAT('%', :search, '%')))")
+    List<Hospital> searchHospitals(@Param("search") String search);
 
-    List<Hospital> searchHospitals(@Param("query") String query);
+    List<Hospital> findByHospitalNameContainingIgnoreCaseAndIsActiveTrue(String name);
+
+    Long countByIsActiveTrue();
 }

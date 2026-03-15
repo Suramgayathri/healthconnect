@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Hospitals - HealthConnect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./css/hospital_search.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="logo">
+            <i class="fas fa-heartbeat"></i> HealthConnect
+        </a>
+        <div class="nav-right">
+            <div class="notification-icon-container">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notification-badge">0</span>
+            </div>
+            <div class="user-profile">
+                <div class="user-avatar" id="userInitial">P</div>
+                <span id="userName">Patient User</span>
+            </div>
+            <button class="btn-logout" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="patient_dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="hospital_search.html" class="active"><i class="fas fa-hospital"></i> Find Hospitals</a></li>
+                <li><a href="appointment_list.html"><i class="fas fa-calendar-check"></i> My Appointments</a></li>
+                <li><a href="medical_records.html"><i class="fas fa-notes-medical"></i> Medical Records</a></li>
+                <li><a href="profile.html"><i class="fas fa-user-circle"></i> Profile Settings</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1><i class="fas fa-hospital"></i> Find Hospitals</h1>
+                    <p>Browse hospitals available in our platform</p>
+                </div>
+            </div>
+
+            <!-- Hospital Search -->
+            <div class="search-section">
+                <div class="search-box">
+                    <i class="fas fa-magnifying-glass"></i>
+                    <input type="text" id="hospitalSearchInput" placeholder="Search hospitals by name, city, or address">
+                </div>
+            </div>
+
+            <!-- Location Search -->
+            
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state" style="display: none;">
+                <div class="spinner"></div>
+                <p>Loading hospitals...</p>
+            </div>
+
+            <!-- Hospitals Grid -->
+            <div id="hospitalsGrid" class="hospitals-grid">
+                <!-- Hospitals will be loaded here -->
+            </div>
+
+            <!-- No Results -->
+            <div id="noResults" class="no-results" style="display: none;">
+                <i class="fas fa-hospital-alt"></i>
+                <h3>No hospitals found</h3>
+                <p>Try adjusting your location or search radius</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/hospital_search.js"></script>
+</body>
+
+</html>

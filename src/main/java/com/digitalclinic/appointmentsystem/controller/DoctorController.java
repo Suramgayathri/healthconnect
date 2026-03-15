@@ -32,6 +32,19 @@ public class DoctorController {
     public ResponseEntity<Page<DoctorProfileDTO>> searchDoctors(@ModelAttribute DoctorSearchDTO searchDTO) {
         return ResponseEntity.ok(doctorService.searchDoctors(searchDTO));
     }
+    
+    @GetMapping
+    public ResponseEntity<List<DoctorProfileDTO>> getDoctorsByHospital(
+            @RequestParam(required = false) String hospital,
+            @RequestParam(required = false) Long hospitalId) {
+        if (hospitalId != null) {
+            return ResponseEntity.ok(doctorService.getDoctorsByHospitalId(hospitalId));
+        }
+        if (hospital == null || hospital.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(doctorService.getDoctorsByHospital(hospital));
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<DoctorProfileDTO> getDoctorProfile(@PathVariable Long id) {

@@ -58,6 +58,12 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 		
+		<!-- Email Support -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+		
 		<!-- Websocket / Realtime features (used by chat or notifications) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

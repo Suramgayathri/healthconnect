@@ -62,7 +62,7 @@ public class DoctorServiceTest {
 
         Page<Doctor> mockedPage = new PageImpl<>(Arrays.asList(doc1));
 
-        when(doctorRepository.searchDoctors(any(), any(), any(), any(PageRequest.class)))
+        when(doctorRepository.searchDoctors(any(), any(), any(), any(), any(PageRequest.class)))
                 .thenReturn(mockedPage);
         when(modelMapper.map(any(Doctor.class), eq(DoctorProfileDTO.class)))
                 .thenReturn(doc1DTO);
@@ -74,7 +74,7 @@ public class DoctorServiceTest {
         assertNotNull(result);
         assertEquals(1, result.getSize());
         assertEquals("Cardiologist", result.getContent().get(0).getSpecialization());
-        verify(doctorRepository, times(1)).searchDoctors(any(), any(), any(), any());
+        verify(doctorRepository, times(1)).searchDoctors(any(), any(), any(), any(), any());
     }
 
     @Test

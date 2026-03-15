@@ -10,15 +10,17 @@ const authHeader = () => ({
     'Content-Type': 'application/json'
 });
 
+let currentTab = 'patientsTab';
 let currentPage = 0;
+let totalPages = 1;
 const pageSize = 10;
-let currentModalType = null; // 'doctor', 'patient', 'admin'
-let currentModalId = null;
 
 // Check authentication
 function checkAuth() {
     const token = getToken();
     const role = localStorage.getItem('userRole');
+    console.log(role, token);
+
 
     if (!token || role !== 'ADMIN') {
         window.location.href = '/login.html';
@@ -30,10 +32,21 @@ function checkAuth() {
 // Show toast notification
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 2rem;
+        background: ${type === 'success' ? '#10B981' : type === 'error' ? '#EF4444' : '#3B82F6'};
+        color: white;
+        border-radius: 8px;
+        z-index: 9999;
+        font-weight: 600;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        animation: slideIn 0.3s ease-out;
+    `;
     toast.textContent = message;
     document.body.appendChild(toast);
-    
     setTimeout(() => {
         toast.style.animation = 'slideOut 0.3s ease-in';
         setTimeout(() => toast.remove(), 300);
@@ -45,18 +58,9 @@ function setupTabs() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     tabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
-            // Update active tab button
             tabButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
-            // Show corresponding tab content
-            const target = btn.dataset.target;
-            document.querySelectorAll('.tab-content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.getElementById(target).classList.add('active');
-            
-            // Reset page and load users
+            currentTab = btn.dataset.target;
             currentPage = 0;
             loadUsers();
         });
@@ -65,25 +69,17 @@ function setupTabs() {
 
 // Load users based on current tab
 async function loadUsers() {
-    const currentTab = document.querySelector('.tab-btn.active')?.dataset.target || 'patientsTab';
-    let tbodyId = '';
-    let endpoint = '';
+    const tbody = document.getElementById('userTableBody');
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Loading...</td></tr>';
 
+    let endpoint = '';
     if (currentTab === 'patientsTab') {
-        tbodyId = 'patientsTableBody';
         endpoint = `${API_BASE}/patients?page=${currentPage}&size=${pageSize}`;
     } else if (currentTab === 'doctorsTab') {
-        tbodyId = 'doctorsTableBody';
         endpoint = `${API_BASE}/doctors?page=${currentPage}&size=${pageSize}`;
     } else {
-        tbodyId = 'adminsTableBody';
         endpoint = `${API_BASE}?page=${currentPage}&size=${pageSize}`;
     }
-
-    const tbody = document.getElementById(tbodyId);
-    if (!tbody) return;
-
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Loading...</td></tr>';
 
     try {
         const response = await fetch(endpoint, {
@@ -92,16 +88,17 @@ async function loadUsers() {
 
         if (response.ok) {
             const data = await response.json();
-            
+            totalPages = data.totalPages || 1;
+
             if (currentTab === 'patientsTab') {
-                displayPatients(data.content || [], data.totalPages || 1);
+                displayPatients(data.content || []);
             } else if (currentTab === 'doctorsTab') {
-                displayDoctors(data.content || [], data.totalPages || 1);
+                displayDoctors(data.content || []);
             } else {
-                displayAdmins(data.content || [], data.totalPages || 1);
+                displayAdmins(data.content || []);
             }
 
-            updatePagination(currentTab, currentPage, data.totalPages || 1);
+            updatePagination();
         } else if (response.status === 403) {
             showToast('Access denied. Admin privileges required.', 'error');
             setTimeout(() => window.location.href = '/login.html', 2000);
@@ -116,9 +113,8 @@ async function loadUsers() {
 }
 
 // Display patients
-function displayPatients(patients, totalPages) {
-    const tbody = document.getElementById('patientsTableBody');
-    if (!tbody) return;
+function displayPatients(patients) {
+    const tbody = document.getElementById('userTableBody');
 
     if (patients.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" class="text-center">No patients found</td></tr>';
@@ -131,31 +127,26 @@ function displayPatients(patients, totalPages) {
             <td>${patient.fullName || 'N/A'}</td>
             <td>${patient.user?.email || 'N/A'}</td>
             <td>${patient.user?.phone || 'N/A'}</td>
-            <td><span class="badge ${patient.user?.isActive ? 'badge-success' : 'badge-danger'}">${patient.user?.isActive ? 'Active' : 'Inactive'}</span></td>
+            <td><span class="badge ${patient.user?.active ? 'badge-success' : 'badge-danger'}">${patient.user?.active ? 'Active' : 'Inactive'}</span></td>
             <td>${formatDate(patient.user?.createdAt)}</td>
             <td>
-                <div class="action-buttons">
-                    <button onclick="toggleUserStatus(${patient.user?.id}, 'patient')" class="action-btn toggle" title="Toggle Status">
-                        <i class="fas fa-toggle-${patient.user?.isActive ? 'on' : 'off'}"></i>
-                        <span>${patient.user?.isActive ? 'On' : 'Off'}</span>
-                    </button>
-                    <button onclick="viewUserDetails(${patient.id}, 'patient')" class="action-btn view" title="View Details">
-                        <i class="fas fa-eye"></i>
-                        <span>View</span>
-                    </button>
-                </div>
+                <button onclick="toggleUserStatus(${patient.user?.id})" class="btn-icon" title="Toggle Status">
+                    <i class="fas fa-toggle-${patient.user?.active ? 'on' : 'off'}"></i>
+                </button>
+                <button onclick="viewPatientDetails(${patient.id})" class="btn-icon" title="View Details">
+                    <i class="fas fa-eye"></i>
+                </button>
             </td>
         </tr>
     `).join('');
 }
 
 // Display doctors
-function displayDoctors(doctors, totalPages) {
-    const tbody = document.getElementById('doctorsTableBody');
-    if (!tbody) return;
+function displayDoctors(doctors) {
+    const tbody = document.getElementById('userTableBody');
 
     if (doctors.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No doctors found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No doctors found</td></tr>';
         return;
     }
 
@@ -166,47 +157,38 @@ function displayDoctors(doctors, totalPages) {
                 <div style="font-weight: 600;">${doctor.fullName || 'N/A'}</div>
                 <div style="font-size: 0.85rem; color: #6B7280;">${doctor.specialization || doctor.specialty || 'N/A'}</div>
             </td>
-            <td>${doctor.specialization || doctor.specialty || 'N/A'}</td>
             <td>${doctor.user?.email || 'N/A'}</td>
             <td>${doctor.user?.phone || 'N/A'}</td>
             <td>
                 <span class="badge ${doctor.isVerified ? 'badge-success' : 'badge-warning'}">
                     ${doctor.isVerified ? 'Verified' : 'Pending'}
                 </span>
-                ${doctor.user?.isActive ? '' : '<span class="badge badge-danger" style="margin-left: 0.25rem;">Inactive</span>'}
+                ${doctor.user?.active ? '' : '<span class="badge badge-danger">Inactive</span>'}
             </td>
             <td>${formatDate(doctor.user?.createdAt)}</td>
             <td>
-                <div class="action-buttons">
-                    ${!doctor.isVerified ? `
-                        <button onclick="approveDoctor(${doctor.id})" class="action-btn approve" title="Approve Doctor">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Approve</span>
-                        </button>
-                        <button onclick="rejectDoctor(${doctor.id})" class="action-btn reject" title="Reject Doctor">
-                            <i class="fas fa-times-circle"></i>
-                            <span>Reject</span>
-                        </button>
-                    ` : ''}
-                    <button onclick="toggleUserStatus(${doctor.user?.id}, 'doctor')" class="action-btn toggle" title="Toggle Status">
-                        <i class="fas fa-toggle-${doctor.user?.isActive ? 'on' : 'off'}"></i>
-                        <span>${doctor.user?.isActive ? 'On' : 'Off'}</span>
+                ${!doctor.isVerified ? `
+                    <button onclick="approveDoctor(${doctor.id})" class="btn-icon" style="color: #10B981;" title="Approve">
+                        <i class="fas fa-check-circle"></i>
                     </button>
-                    <button onclick="viewUserDetails(${doctor.id}, 'doctor')" class="action-btn view" title="View Details">
-                        <i class="fas fa-eye"></i>
-                        <span>View</span>
+                    <button onclick="rejectDoctor(${doctor.id})" class="btn-icon" style="color: #EF4444;" title="Reject">
+                        <i class="fas fa-times-circle"></i>
                     </button>
-                </div>
+                ` : ''}
+                <button onclick="toggleUserStatus(${doctor.user?.id})" class="btn-icon" title="Toggle Status">
+                    <i class="fas fa-toggle-${doctor.user?.active ? 'on' : 'off'}"></i>
+                </button>
+                <button onclick="viewDoctorDetails(${doctor.id})" class="btn-icon" title="View Details">
+                    <i class="fas fa-eye"></i>
+                </button>
             </td>
         </tr>
     `).join('');
 }
 
 // Display admins
-function displayAdmins(users, totalPages) {
-    const tbody = document.getElementById('adminsTableBody');
-    if (!tbody) return;
-
+function displayAdmins(users) {
+    const tbody = document.getElementById('userTableBody');
     const admins = users.filter(u => u.role === 'ADMIN');
 
     if (admins.length === 0) {
@@ -220,19 +202,12 @@ function displayAdmins(users, totalPages) {
             <td>${admin.firstName || ''} ${admin.lastName || ''}</td>
             <td>${admin.email || 'N/A'}</td>
             <td>${admin.phone || 'N/A'}</td>
-            <td><span class="badge ${admin.isActive ? 'badge-success' : 'badge-danger'}">${admin.isActive ? 'Active' : 'Inactive'}</span></td>
+            <td><span class="badge ${admin.active ? 'badge-success' : 'badge-danger'}">${admin.active ? 'Active' : 'Inactive'}</span></td>
             <td>${formatDate(admin.createdAt)}</td>
             <td>
-                <div class="action-buttons">
-                    <button onclick="toggleUserStatus(${admin.id}, 'admin')" class="action-btn toggle" title="Toggle Status">
-                        <i class="fas fa-toggle-${admin.isActive ? 'on' : 'off'}"></i>
-                        <span>${admin.isActive ? 'On' : 'Off'}</span>
-                    </button>
-                    <button onclick="viewUserDetails(${admin.id}, 'admin')" class="action-btn view" title="View Details">
-                        <i class="fas fa-eye"></i>
-                        <span>View</span>
-                    </button>
-                </div>
+                <button onclick="toggleUserStatus(${admin.id})" class="btn-icon" title="Toggle Status">
+                    <i class="fas fa-toggle-${admin.active ? 'on' : 'off'}"></i>
+                </button>
             </td>
         </tr>
     `).join('');
@@ -248,14 +223,12 @@ async function approveDoctor(doctorId) {
             headers: authHeader()
         });
 
-        const data = await response.json();
-
         if (response.ok) {
             showToast('Doctor approved successfully!', 'success');
             loadUsers();
         } else {
-            console.error('Approval error:', data);
-            showToast(data.error || 'Failed to approve doctor', 'error');
+            const error = await response.json();
+            showToast(error.error || 'Failed to approve doctor', 'error');
         }
     } catch (error) {
         console.error('Error approving doctor:', error);
@@ -287,7 +260,7 @@ async function rejectDoctor(doctorId) {
 }
 
 // Toggle user status
-async function toggleUserStatus(userId, userType) {
+async function toggleUserStatus(userId) {
     if (!confirm('Are you sure you want to toggle this user\'s status?')) return;
 
     try {
@@ -308,307 +281,14 @@ async function toggleUserStatus(userId, userType) {
     }
 }
 
-// View user details in modal
-async function viewUserDetails(id, type) {
-    currentModalType = type;
-    currentModalId = id;
-    
-    try {
-        let endpoint = '';
-        if (type === 'doctor') {
-            endpoint = `${API_BASE}/doctors/${id}`;
-        } else if (type === 'patient') {
-            endpoint = `${API_BASE}/patients/${id}`;
-        } else {
-            endpoint = `${API_BASE}/${id}`;
-        }
-
-        const response = await fetch(endpoint, {
-            headers: authHeader()
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            renderUserModal(data, type);
-            document.getElementById('userDetailsModal').classList.add('active');
-        } else {
-            showToast('Failed to load user details', 'error');
-        }
-    } catch (error) {
-        console.error('Error fetching user details:', error);
-        showToast('Failed to load user details', 'error');
-    }
+// View details
+function viewPatientDetails(patientId) {
+    showToast('Patient details view coming soon', 'info');
 }
 
-// Render user modal content
-function renderUserModal(user, type) {
-    const modalBody = document.getElementById('modalBody');
-    const modalFooter = document.getElementById('modalFooter');
-    const modalTitle = document.getElementById('modalTitle');
-
-    // Set modal title
-    if (type === 'doctor') {
-        modalTitle.textContent = 'Doctor Details';
-    } else if (type === 'patient') {
-        modalTitle.textContent = 'Patient Details';
-    } else {
-        modalTitle.textContent = 'Admin Details';
-    }
-
-    // Build modal content based on user type
-    let content = '';
-    let actions = '';
-
-    if (type === 'doctor') {
-        content = `
-            <div class="modal-profile-header">
-                <div class="profile-avatar">
-                    <i class="fas fa-user-md"></i>
-                </div>
-                <div class="profile-info">
-                    <h3>${user.fullName || 'N/A'}</h3>
-                    <p class="profile-specialty">${user.specialization || 'N/A'}</p>
-                </div>
-            </div>
-            <div class="modal-details-grid">
-                <div class="detail-item">
-                    <span class="detail-label">Email</span>
-                    <span class="detail-value">${user.user?.email || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Phone</span>
-                    <span class="detail-value">${user.user?.phone || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">License Number</span>
-                    <span class="detail-value">${user.licenseNumber || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Qualifications</span>
-                    <span class="detail-value">${user.qualifications || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Experience</span>
-                    <span class="detail-value">${user.experienceYears || 0} years</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Consultation Fee</span>
-                    <span class="detail-value">${user.consultationFee ? '$' + user.consultationFee : 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Languages</span>
-                    <span class="detail-value">${user.languagesSpoken || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Rating</span>
-                    <span class="detail-value">${user.averageRating ? user.averageRating + ' / 5.00' : 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">About</span>
-                    <span class="detail-value">${user.about || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Status</span>
-                    <span class="detail-value badge ${user.isVerified ? 'badge-success' : 'badge-warning'}">
-                        ${user.isVerified ? 'Verified' : 'Pending'}
-                    </span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Available</span>
-                    <span class="detail-value badge ${user.isAvailable ? 'badge-success' : 'badge-danger'}">
-                        ${user.isAvailable ? 'Yes' : 'No'}
-                    </span>
-                </div>
-            </div>
-        `;
-
-        // Doctor action buttons
-        if (!user.isVerified) {
-            actions = `
-                <button class="action-btn approve" onclick="confirmDoctorAction(${user.id}, 'approve')">
-                    <i class="fas fa-check-circle"></i> Approve
-                </button>
-                <button class="action-btn reject" onclick="confirmDoctorAction(${user.id}, 'reject')">
-                    <i class="fas fa-times-circle"></i> Reject
-                </button>
-            `;
-        }
-        actions += `
-            <button class="action-btn toggle" onclick="toggleUserStatus(${user.user?.id}, 'doctor')">
-                <i class="fas fa-toggle-${user.user?.isActive ? 'on' : 'off'}"></i> ${user.user?.isActive ? 'Suspend' : 'Activate'}
-            </button>
-        `;
-
-    } else if (type === 'patient') {
-        content = `
-            <div class="modal-profile-header">
-                <div class="profile-avatar">
-                    <i class="fas fa-user-injured"></i>
-                </div>
-                <div class="profile-info">
-                    <h3>${user.fullName || 'N/A'}</h3>
-                    <p class="profile-specialty">Patient</p>
-                </div>
-            </div>
-            <div class="modal-details-grid">
-                <div class="detail-item">
-                    <span class="detail-label">Email</span>
-                    <span class="detail-value">${user.user?.email || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Phone</span>
-                    <span class="detail-value">${user.user?.phone || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Date of Birth</span>
-                    <span class="detail-value">${user.dob ? formatDate(user.dob) : 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Gender</span>
-                    <span class="detail-value">${user.gender || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Blood Group</span>
-                    <span class="detail-value">${user.bloodGroup || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Address</span>
-                    <span class="detail-value">${user.address || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">City</span>
-                    <span class="detail-value">${user.city || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">State</span>
-                    <span class="detail-value">${user.state || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Pincode</span>
-                    <span class="detail-value">${user.pincode || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Emergency Contact</span>
-                    <span class="detail-value">${user.emergencyContact || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Allergies</span>
-                    <span class="detail-value">${user.allergies || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Chronic Conditions</span>
-                    <span class="detail-value">${user.chronicConditions || 'N/A'}</span>
-                </div>
-            </div>
-        `;
-
-        // Patient action buttons
-        actions = `
-            <button class="action-btn toggle" onclick="toggleUserStatus(${user.user?.id}, 'patient')">
-                <i class="fas fa-toggle-${user.user?.isActive ? 'on' : 'off'}"></i> ${user.user?.isActive ? 'Suspend' : 'Activate'}
-            </button>
-        `;
-
-    } else {
-        // Admin
-        content = `
-            <div class="modal-profile-header">
-                <div class="profile-avatar">
-                    <i class="fas fa-user-shield"></i>
-                </div>
-                <div class="profile-info">
-                    <h3>${user.firstName || ''} ${user.lastName || ''}</h3>
-                    <p class="profile-specialty">Admin</p>
-                </div>
-            </div>
-            <div class="modal-details-grid">
-                <div class="detail-item">
-                    <span class="detail-label">Email</span>
-                    <span class="detail-value">${user.email || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Phone</span>
-                    <span class="detail-value">${user.phone || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Role</span>
-                    <span class="detail-value badge badge-primary">${user.role || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Status</span>
-                    <span class="detail-value badge ${user.isActive ? 'badge-success' : 'badge-danger'}">
-                        ${user.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                </div>
-            </div>
-        `;
-
-        // Admin action buttons
-        actions = `
-            <button class="action-btn toggle" onclick="toggleUserStatus(${user.id}, 'admin')">
-                <i class="fas fa-toggle-${user.isActive ? 'on' : 'off'}"></i> ${user.isActive ? 'Suspend' : 'Activate'}
-            </button>
-        `;
-    }
-
-    modalBody.innerHTML = content;
-    modalFooter.innerHTML = actions;
+function viewDoctorDetails(doctorId) {
+    showToast('Doctor details view coming soon', 'info');
 }
-
-// Confirm doctor action (approve/reject)
-function confirmDoctorAction(doctorId, action) {
-    const actionTitle = action === 'approve' ? 'Approve Doctor' : 'Reject Doctor';
-    const actionMessage = action === 'approve' 
-        ? 'Are you sure you want to approve this doctor? This will make them available to patients.'
-        : 'Are you sure you want to reject this doctor? This will set their status to unverified.';
-    
-    document.getElementById('actionModalTitle').textContent = actionTitle;
-    document.getElementById('actionModalMessage').textContent = actionMessage;
-    document.getElementById('actionUserId').value = doctorId;
-    document.getElementById('actionType').value = action;
-    
-    document.getElementById('actionModal').classList.add('active');
-}
-
-// Close modals
-function closeModal() {
-    document.getElementById('userDetailsModal').classList.remove('active');
-    currentModalType = null;
-    currentModalId = null;
-}
-
-function closeActionModal() {
-    document.getElementById('actionModal').classList.remove('active');
-}
-
-// Handle action modal confirm
-document.getElementById('confirmActionBtn').addEventListener('click', async function() {
-    const doctorId = document.getElementById('actionUserId').value;
-    const action = document.getElementById('actionType').value;
-    
-    if (action === 'approve') {
-        await approveDoctor(doctorId);
-    } else if (action === 'reject') {
-        await rejectDoctor(doctorId);
-    }
-    
-    closeModal();
-    closeActionModal();
-    loadUsers();
-});
-
-// Close modal when clicking outside
-document.getElementById('userDetailsModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeModal();
-    }
-});
-
-document.getElementById('actionModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeActionModal();
-    }
-});
 
 // Format date
 function formatDate(dateString) {
@@ -618,62 +298,50 @@ function formatDate(dateString) {
 }
 
 // Pagination
-function updatePagination(tab, currentPage, totalPages) {
-    let pageIndicator, prevBtn, nextBtn;
+function updatePagination() {
+    document.getElementById('pageIndicator').textContent = `Page ${currentPage + 1} of ${totalPages}`;
+    document.getElementById('prevPage').disabled = currentPage === 0;
+    document.getElementById('nextPage').disabled = currentPage >= totalPages - 1;
+}
 
-    if (tab === 'patientsTab') {
-        pageIndicator = document.getElementById('patientsPageIndicator');
-        prevBtn = document.getElementById('prevPatientsPage');
-        nextBtn = document.getElementById('nextPatientsPage');
-    } else if (tab === 'doctorsTab') {
-        pageIndicator = document.getElementById('doctorsPageIndicator');
-        prevBtn = document.getElementById('prevDoctorsPage');
-        nextBtn = document.getElementById('nextDoctorsPage');
-    } else {
-        pageIndicator = document.getElementById('adminsPageIndicator');
-        prevBtn = document.getElementById('prevAdminsPage');
-        nextBtn = document.getElementById('nextAdminsPage');
-    }
-
-    if (pageIndicator) {
-        pageIndicator.textContent = `Page ${currentPage + 1} of ${totalPages}`;
-    }
-    if (prevBtn) {
-        prevBtn.disabled = currentPage === 0;
-    }
-    if (nextBtn) {
-        nextBtn.disabled = currentPage >= totalPages - 1;
+function goToPrevPage() {
+    if (currentPage > 0) {
+        currentPage--;
+        loadUsers();
     }
 }
 
-function goToPage(tab, direction) {
-    if (direction === 'prev' && currentPage > 0) {
-        currentPage--;
-        loadUsers();
-    } else if (direction === 'next' && currentPage < 10) {
+function goToNextPage() {
+    if (currentPage < totalPages - 1) {
         currentPage++;
         loadUsers();
     }
 }
 
-// Setup search functionality
+// Search functionality
 function setupSearch() {
-    document.querySelectorAll('.search-input').forEach(input => {
-        input.addEventListener('input', (e) => {
+    const searchInput = document.getElementById('userSearch');
+    let searchTimeout;
+
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
             const searchTerm = e.target.value.toLowerCase();
-            const tbody = e.target.closest('.table-card').querySelector('tbody');
-            const rows = tbody.querySelectorAll('tr');
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-        });
+            filterTable(searchTerm);
+        }, 300);
+    });
+}
+
+function filterTable(searchTerm) {
+    const rows = document.querySelectorAll('#userTableBody tr');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
     });
 }
 
 // Export CSV
-function exportToCSV(tab) {
+function exportToCSV() {
     showToast('Export functionality coming soon', 'info');
 }
 
@@ -685,16 +353,15 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSearch();
     loadUsers();
 
-    // Setup pagination buttons for each tab
-    document.getElementById('prevPatientsPage').addEventListener('click', () => goToPage('patients', 'prev'));
-    document.getElementById('nextPatientsPage').addEventListener('click', () => goToPage('patients', 'next'));
-    document.getElementById('prevDoctorsPage').addEventListener('click', () => goToPage('doctors', 'prev'));
-    document.getElementById('nextDoctorsPage').addEventListener('click', () => goToPage('doctors', 'next'));
-    document.getElementById('prevAdminsPage').addEventListener('click', () => goToPage('admins', 'prev'));
-    document.getElementById('nextAdminsPage').addEventListener('click', () => goToPage('admins', 'next'));
+    // Pagination buttons
+    document.getElementById('prevPage').addEventListener('click', goToPrevPage);
+    document.getElementById('nextPage').addEventListener('click', goToNextPage);
 
-    // Setup export buttons
-    document.getElementById('exportPatientsBtn').addEventListener('click', () => exportToCSV('patients'));
-    document.getElementById('exportDoctorsBtn').addEventListener('click', () => exportToCSV('doctors'));
-    document.getElementById('exportAdminsBtn').addEventListener('click', () => exportToCSV('admins'));
+    // Export button
+    document.getElementById('exportUsersBtn').addEventListener('click', exportToCSV);
 });
+
+// Modal functions
+function closeModal() {
+    document.getElementById('actionModal').classList.add('hidden');
+}

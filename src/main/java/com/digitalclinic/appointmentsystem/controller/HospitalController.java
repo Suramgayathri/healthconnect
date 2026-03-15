@@ -18,23 +18,21 @@ public class HospitalController {
 
     @GetMapping
     public ResponseEntity<List<HospitalDTO>> getAllHospitals() {
-        return ResponseEntity.ok(hospitalService.getAllHospitals());
+        return ResponseEntity.ok(hospitalService.getAllActiveHospitals());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<HospitalDTO>> searchHospitals(@RequestParam String query) {
+        return ResponseEntity.ok(hospitalService.searchHospitals(query));
+    }
+
+    @GetMapping("/city/{city}")
+    public ResponseEntity<List<HospitalDTO>> getHospitalsByCity(@PathVariable String city) {
+        return ResponseEntity.ok(hospitalService.getHospitalsByCity(city));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<HospitalDTO> getHospitalById(@PathVariable Long id) {
         return ResponseEntity.ok(hospitalService.getHospitalById(id));
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<List<HospitalDTO>> searchHospitals(
-            @RequestParam String query) {
-        return ResponseEntity.ok(hospitalService.searchHospitals(query));
-    }
-
-    @GetMapping("/city/{city}")
-    public ResponseEntity<List<HospitalDTO>> getHospitalsByCity(
-            @PathVariable String city) {
-        return ResponseEntity.ok(hospitalService.getHospitalsByCity(city));
     }
 }

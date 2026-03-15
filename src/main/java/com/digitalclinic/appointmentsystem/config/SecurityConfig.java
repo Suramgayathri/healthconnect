@@ -57,14 +57,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
-                        // Public API endpoints (no auth required)
-                        .requestMatchers("/api/hospitals/**").permitAll()
-                        .requestMatchers("/api/doctors/available").permitAll()
-                        .requestMatchers("/api/doctors/search").permitAll()
-                        .requestMatchers("/api/doctors/hospital/**").permitAll()
-                        .requestMatchers("/api/doctors/{id}").permitAll()
-                        .requestMatchers("/api/doctors/specialization/**").permitAll()
-                        .requestMatchers("/api/doctors/top-rated").permitAll()
+                        // Public API endpoints
+                        .requestMatchers("/api/hospitals/**", "/api/doctors/search", "/api/doctors/hospital/**").permitAll()
                         // Redirect endpoints (without .html)
                         .requestMatchers("/login", "/register", "/dashboard", "/admin", "/doctor",
                                 "/register-patient", "/register-doctor").permitAll()
@@ -77,7 +71,7 @@ public class SecurityConfig {
                                 "/prescription_view.html", "/doctor_patients.html", "/doctor_patient_history.html",
                                 "/checkout.html", "/admin_dashboard.html", "/admin_users.html",
                                 "/admin_reports.html", "/admin_settings.html", "/doctor_profile.html",
-                                "/doctor_schedule.html", "/doctor_search.html", "/profile.html").permitAll()
+                                "/doctor_schedule.html", "/doctor_search.html", "/hospital_search.html", "/profile.html").permitAll()
                         // Static resources
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/webjars/**").permitAll()
                         .requestMatchers("/*.css", "/*.js", "/*.png", "/*.jpg", "/*.jpeg", "/*.gif", "/*.svg", "/*.ico").permitAll()

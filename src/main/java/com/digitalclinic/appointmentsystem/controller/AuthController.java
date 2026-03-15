@@ -1,6 +1,8 @@
 package com.digitalclinic.appointmentsystem.controller;
 
 import com.digitalclinic.appointmentsystem.dto.LoginDTO;
+import com.digitalclinic.appointmentsystem.dto.OtpRequestDTO;
+import com.digitalclinic.appointmentsystem.dto.OtpVerifyDTO;
 import com.digitalclinic.appointmentsystem.dto.UserRegistrationDTO;
 import com.digitalclinic.appointmentsystem.model.Doctor;
 import com.digitalclinic.appointmentsystem.model.Patient;
@@ -9,10 +11,8 @@ import com.digitalclinic.appointmentsystem.model.User;
 import com.digitalclinic.appointmentsystem.repository.DoctorRepository;
 import com.digitalclinic.appointmentsystem.repository.PatientRepository;
 import com.digitalclinic.appointmentsystem.repository.UserRepository;
+import com.digitalclinic.appointmentsystem.service.OtpService;
 import com.digitalclinic.appointmentsystem.service.UserService;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -28,10 +28,11 @@ import java.util.Optional;
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class AuthController {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
-
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private OtpService otpService;
 
     @Autowired
     private UserRepository userRepository;
@@ -49,6 +50,58 @@ public class AuthController {
     public ResponseEntity<?> testHash(@RequestParam String password) {
         String hash = passwordEncoder.encode(password);
         return ResponseEntity.ok(Map.of("hash", hash, "password", password));
+    }
+
+    @PostMapping("/send-otp")
+    public ResponseEntity<?> sendOtp(@RequestBody OtpRequestDTO otpRequest) {
+        try {
+            // Validate input
+            if (otpRequest.getEmail() == null || otpRequest.getEmail().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
+            }
+            
+            // Check if email already exists
+            if (userRepository.existsByEmail(otpRequest.getEmail())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Email is already registered"));
+            }
+            
+            // Send OTP
+            otpService.sendOtp(otpRequest.getEmail(), otpRequest.getPhone());
+            
+            return ResponseEntity.ok(Map.of(
+                "message", "OTP sent successfully to your email",
+                "email", otpRequest.getEmail()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to send OTP: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody OtpVerifyDTO otpVerify) {
+        try {
+            // Validate input
+            if (otpVerify.getEmail() == null || otpVerify.getOtpCode() == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Email and OTP code are required"));
+            }
+            
+            // Verify OTP
+            boolean isValid = otpService.verifyOtp(otpVerify.getEmail(), otpVerify.getOtpCode());
+            
+            if (isValid) {
+                return ResponseEntity.ok(Map.of(
+                    "message", "OTP verified successfully",
+                    "verified", true
+                ));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Invalid or expired OTP",
+                    "verified", false
+                ));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to verify OTP: " + e.getMessage()));
+        }
     }
 
     @PostMapping("/register")
@@ -154,32 +207,12 @@ public class AuthController {
                                            @RequestParam(value = "consultationFee", required = false, defaultValue = "0") Double consultationFee,
                                            @RequestParam(value = "about", required = false) String about,
                                            @RequestParam(value = "profilePhoto", required = false) org.springframework.web.multipart.MultipartFile profilePhoto) {
-        logger.debug("Doctor registration attempt - email: {}, specialization: {}", email, specialization);
-        
-        // Validate required fields
-        if (fullName == null || fullName.trim().isEmpty()) {
-            logger.error("Doctor registration failed - full name is required");
-            return ResponseEntity.badRequest().body(Map.of("error", "Full name is required"));
-        }
-        
-        if (specialization == null || specialization.trim().isEmpty()) {
-            logger.error("Doctor registration failed - specialization is required");
-            return ResponseEntity.badRequest().body(Map.of("error", "Specialization is required"));
-        }
-        
-        if (licenseNumber == null || licenseNumber.trim().isEmpty()) {
-            logger.error("Doctor registration failed - license number is required");
-            return ResponseEntity.badRequest().body(Map.of("error", "License number is required"));
-        }
-
         try {
             // Check if email or phone already exists
             if (userRepository.existsByEmail(email)) {
-                logger.error("Doctor registration failed - email already in use: {}", email);
                 return ResponseEntity.badRequest().body(Map.of("error", "Email is already in use!"));
             }
             if (userRepository.existsByPhone(phone)) {
-                logger.error("Doctor registration failed - phone already in use: {}", phone);
                 return ResponseEntity.badRequest().body(Map.of("error", "Phone number is already in use!"));
             }
 
@@ -201,7 +234,6 @@ public class AuthController {
                     .isActive(true)
                     .build();
             user = userRepository.save(user);
-            logger.info("User created for doctor: {}", email);
 
             // Handle profile photo upload (optional - save to uploads folder or just store filename)
             String photoPath = null;
@@ -215,27 +247,25 @@ public class AuthController {
             // Create doctor profile
             Doctor doctor = Doctor.builder()
                     .user(user)
-                    .fullName(fullName.trim())
-                    .specialty(specialization.trim()) // Map to specialty column
-                    .specialization(specialization.trim()) // Map to specialization column
-                    .licenseNumber(licenseNumber.trim())
-                    .qualifications(qualifications != null ? qualifications.trim() : null)
+                    .fullName(fullName)
+                    .specialty(specialization) // Map to specialty column
+                    .specialization(specialization) // Map to specialization column
+                    .licenseNumber(licenseNumber)
+                    .qualifications(qualifications)
                     .experienceYears(experienceYears)
-                    .languagesSpoken(languagesSpoken != null ? languagesSpoken.trim() : null)
+                    .languagesSpoken(languagesSpoken)
                     .consultationFee(consultationFee != null ? java.math.BigDecimal.valueOf(consultationFee) : null)
-                    .about(about != null ? about.trim() : null)
+                    .about(about)
                     .profilePhoto(photoPath)
                     .isVerified(false) // Doctors need admin verification
                     .isAvailable(false) // Not available until verified
                     .build();
             doctorRepository.save(doctor);
-            logger.info("Doctor profile created: id={}, specialization={}", doctor.getId(), specialization);
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Doctor registration successful! Your account is pending verification.");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Doctor registration failed for email {}: {}", email, e.getMessage(), e);
             return ResponseEntity.badRequest().body(Map.of("error", "Registration failed: " + e.getMessage()));
         }
     }

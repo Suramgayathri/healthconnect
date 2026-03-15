@@ -1,12 +1,15 @@
 package com.digitalclinic.appointmentsystem.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,25 +25,34 @@ public class Hospital {
     @Column(name = "hospital_id")
     private Long id;
 
-    @Column(name = "hospital_name", nullable = false)
+    @NotBlank(message = "Hospital name is required")
+    @Size(max = 200)
+    @Column(name = "hospital_name", nullable = false, length = 200)
     private String hospitalName;
 
-    @Column(name = "hospital_address", columnDefinition = "TEXT")
+    @NotBlank(message = "Address is required")
+    @Column(name = "hospital_address", nullable = false, columnDefinition = "TEXT")
     private String hospitalAddress;
 
-    @Column(name = "city")
+    @NotBlank(message = "City is required")
+    @Size(max = 100)
+    @Column(name = "city", nullable = false, length = 100)
     private String city;
 
-    @Column(name = "state")
+    @Size(max = 100)
+    @Column(name = "state", length = 100)
     private String state;
 
-    @Column(name = "pincode")
+    @Size(max = 20)
+    @Column(name = "pincode", length = 20)
     private String pincode;
 
-    @Column(name = "phone")
+    @Size(max = 20)
+    @Column(name = "phone", length = 20)
     private String phone;
 
-    @Column(name = "email")
+    @Size(max = 100)
+    @Column(name = "email", length = 100)
     private String email;
 
     @Column(name = "website")
@@ -70,26 +82,11 @@ public class Hospital {
     @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(name = "latitude", precision = 10, scale = 8)
-    private BigDecimal latitude;
-
-    @Column(name = "longitude", precision = 11, scale = 8)
-    private BigDecimal longitude;
-
-    @Column(name = "created_at")
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

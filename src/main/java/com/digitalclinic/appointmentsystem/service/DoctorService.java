@@ -65,11 +65,28 @@ public class DoctorService {
 
         Page<Doctor> doctors = doctorRepository.searchDoctors(
                 searchDTO.getSpecialization(),
+                searchDTO.getHospitalName(),
                 searchDTO.getMinExperience(),
                 searchDTO.getMaxFee(),
                 pageable);
 
         return doctors.map(this::convertToProfileDTO);
+    }
+    
+    public List<DoctorProfileDTO> getDoctorsByHospital(String hospitalName) {
+        logger.info("Fetching doctors for hospital: {}", hospitalName);
+        List<Doctor> doctors = doctorRepository.findByHospitalNameContainingIgnoreCaseAndIsAvailableTrueAndIsVerifiedTrue(hospitalName);
+        return doctors.stream()
+                .map(this::convertToProfileDTO)
+                .toList();
+    }
+    
+    public List<DoctorProfileDTO> getDoctorsByHospitalId(Long hospitalId) {
+        logger.info("Fetching doctors for hospital ID: {}", hospitalId);
+        List<Doctor> doctors = doctorRepository.findByHospitalIdAndIsAvailableTrueAndIsVerifiedTrue(hospitalId);
+        return doctors.stream()
+                .map(this::convertToProfileDTO)
+                .toList();
     }
 
     public DoctorProfileDTO getDoctorProfile(Long doctorId) {

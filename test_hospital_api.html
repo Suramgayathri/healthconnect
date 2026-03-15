@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Hospital API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .error {
+            border-left-color: #f44336;
+            background: #ffebee;
+            color: #c62828;
+        }
+        .success {
+            border-left-color: #4CAF50;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .info {
+            background: #e3f2fd;
+            border-left-color: #2196F3;
+            color: #1565c0;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 Hospital API Test</h1>
+        
+        <div class="info">
+            <strong>Instructions:</strong>
+            <ol>
+                <li>Make sure your Spring Boot application is running on port 8080</li>
+                <li>Make sure you've run the SQL script (run_hospital_data.bat)</li>
+                <li>Click the buttons below to test the API endpoints</li>
+            </ol>
+        </div>
+
+        <div>
+            <button onclick="testGetAllHospitals()">Test: Get All Hospitals</button>
+            <button onclick="testSearchHospitals()">Test: Search Hospitals (Mumbai)</button>
+            <button onclick="testGetByCity()">Test: Get by City (Delhi)</button>
+            <button onclick="testGetById()">Test: Get Hospital by ID (1)</button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+
+        function showResult(data, isError = false) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = isError ? 'error' : 'success';
+            resultDiv.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function testGetAllHospitals() {
+            try {
+                console.log('Testing: GET /api/hospitals');
+                const response = await fetch(`${API_BASE}/api/hospitals`);
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Data received:', data);
+                
+                showResult({
+                    status: 'SUCCESS',
+                    endpoint: '/api/hospitals',
+                    hospitalCount: data.length,
+                    hospitals: data
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                showResult({
+                    status: 'ERROR',
+                    endpoint: '/api/hospitals',
+                    error: error.message
+                }, true);
+            }
+        }
+
+        async function testSearchHospitals() {
+            try {
+                console.log('Testing: GET /api/hospitals/search?query=Mumbai');
+                const response = await fetch(`${API_BASE}/api/hospitals/search?query=Mumbai`);
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Data received:', data);
+                
+                showResult({
+                    status: 'SUCCESS',
+                    endpoint: '/api/hospitals/search?query=Mumbai',
+                    hospitalCount: data.length,
+                    hospitals: data
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                showResult({
+                    status: 'ERROR',
+                    endpoint: '/api/hospitals/search',
+                    error: error.message
+                }, true);
+            }
+        }
+
+        async function testGetByCity() {
+            try {
+                console.log('Testing: GET /api/hospitals/city/Delhi');
+                const response = await fetch(`${API_BASE}/api/hospitals/city/Delhi`);
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Data received:', data);
+                
+                showResult({
+                    status: 'SUCCESS',
+                    endpoint: '/api/hospitals/city/Delhi',
+                    hospitalCount: data.length,
+                    hospitals: data
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                showResult({
+                    status: 'ERROR',
+                    endpoint: '/api/hospitals/city/Delhi',
+                    error: error.message
+                }, true);
+            }
+        }
+
+        async function testGetById() {
+            try {
+                console.log('Testing: GET /api/hospitals/1');
+                const response = await fetch(`${API_BASE}/api/hospitals/1`);
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Data received:', data);
+                
+                showResult({
+                    status: 'SUCCESS',
+                    endpoint: '/api/hospitals/1',
+                    hospital: data
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                showResult({
+                    status: 'ERROR',
+                    endpoint: '/api/hospitals/1',
+                    error: error.message
+                }, true);
+            }
+        }
+
+        // Auto-test on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('Page loaded. Ready to test APIs.');
+            console.log('API Base URL:', API_BASE);
+        });
+    </script>
+</body>
+</html>

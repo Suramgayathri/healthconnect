@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 public class DoctorSearchDTO {
     private String specialization;
     private String city;
+    private String hospitalName;
     private Integer minExperience;
     private BigDecimal maxFee;
     private BigDecimal minRating;

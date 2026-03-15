@@ -33,27 +33,17 @@ public class Doctor {
     private User user;
 
     @NotBlank(message = "Full name is required")
-    @Size(max = 100, message = "Full name must be less than 100 characters")
+    @Size(max = 100)
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-    @Size(max = 100, message = "Specialty must be less than 100 characters")
     @Column(name = "specialty")
     private String specialty;
 
     @NotBlank(message = "Specialization is required")
-    @Size(max = 100, message = "Specialization must be less than 100 characters")
+    @Size(max = 100)
     @Column(nullable = false, length = 100)
     private String specialization;
-
-    @Column(name = "hospital_id")
-    private Long hospitalId;
-
-    @Column(name = "hospital_name", length = 100)
-    private String hospitalName;
-
-    @Column(name = "hospital_address", columnDefinition = "TEXT")
-    private String hospitalAddress;
 
     @Column(columnDefinition = "TEXT")
     private String qualifications;
@@ -75,6 +65,15 @@ public class Doctor {
 
     @Column(name = "consultation_fee", precision = 10, scale = 2)
     private BigDecimal consultationFee;
+    
+    @Column(name = "hospital_name", length = 255)
+    private String hospitalName;
+    
+    @Column(name = "hospital_address", columnDefinition = "TEXT")
+    private String hospitalAddress;
+    
+    @Column(name = "hospital_id")
+    private Long hospitalId;
 
     @Column(name = "average_rating", precision = 3, scale = 2)
     @Builder.Default

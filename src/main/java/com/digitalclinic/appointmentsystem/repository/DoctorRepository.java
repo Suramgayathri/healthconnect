@@ -22,6 +22,10 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     List<Doctor> findByIsAvailableTrue();
 
     List<Doctor> findByIsVerifiedTrue();
+    
+    List<Doctor> findByHospitalNameContainingIgnoreCaseAndIsAvailableTrueAndIsVerifiedTrue(String hospitalName);
+    
+    List<Doctor> findByHospitalIdAndIsAvailableTrueAndIsVerifiedTrue(Long hospitalId);
 
     @Query("SELECT d FROM Doctor d WHERE d.isAvailable = true AND d.isVerified = true")
     List<Doctor> findAllAvailableAndVerified();
@@ -29,11 +33,13 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     // Advanced search
     @Query("SELECT d FROM Doctor d WHERE " +
             "(:specialization IS NULL OR d.specialization = :specialization) AND " +
+            "(:hospitalName IS NULL OR LOWER(d.hospitalName) LIKE LOWER(CONCAT('%', :hospitalName, '%'))) AND " +
             "(:minExperience IS NULL OR d.experienceYears >= :minExperience) AND " +
             "(:maxFee IS NULL OR d.consultationFee <= :maxFee) AND " +
             "d.isAvailable = true AND d.isVerified = true")
     Page<Doctor> searchDoctors(
             @Param("specialization") String specialization,
+            @Param("hospitalName") String hospitalName,
             @Param("minExperience") Integer minExperience,
             @Param("maxFee") BigDecimal maxFee,
             Pageable pageable);
@@ -41,13 +47,12 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     // Search by name
     List<Doctor> findByFullNameContainingIgnoreCase(String name);
 
-    // Search by hospital
-    List<Doctor> findByHospitalId(Long hospitalId);
-
     // Top rated doctors
     @Query("SELECT d FROM Doctor d WHERE d.averageRating >= :minRating " +
             "ORDER BY d.averageRating DESC, d.totalReviews DESC")
     List<Doctor> findTopRatedDoctors(@Param("minRating") BigDecimal minRating, Pageable pageable);
 
     Long countBySpecialization(String specialization);
+    
+    Long countByHospitalIdAndIsAvailableTrueAndIsVerifiedTrue(Long hospitalId);
 }

@@ -33,12 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function connectWebSocket(userId, token) {
-    // Check if SockJS is available
-    if (typeof SockJS === 'undefined') {
-        console.log('SockJS not loaded - skipping WebSocket connection');
-        return;
-    }
-    
     const socket = new SockJS('/ws');
     stompClient = Stomp.over(socket);
 

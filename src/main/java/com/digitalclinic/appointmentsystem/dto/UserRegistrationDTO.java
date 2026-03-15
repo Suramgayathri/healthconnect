@@ -12,9 +12,5 @@ public class UserRegistrationDTO {
     private String dob;
     private String gender;
     private String bloodGroup;
-    private String address;
-    private String city;
-    private String state;
-    private String pincode;
     private Role role; // PATIENT or DOCTOR
 }
