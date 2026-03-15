@@ -135,10 +135,7 @@ function renderDoctors(doctors) {
                 <div class="doctor-card-header">
                     <div class="doctor-avatar-wrap">
                         <div class="doctor-avatar">
-                            ${doctor.profilePhoto
-                                ? `<img src="${doctor.profilePhoto}" alt="${name}" onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<span>${initials}</span>'; this.parentElement.style.display='flex'; this.parentElement.style.alignItems='center'; this.parentElement.style.justifyContent='center'; this.parentElement.style.width='100%'; this.parentElement.style.height='100%'; this.parentElement.style.color='#4F46E5'; this.parentElement.style.fontSize='1.5rem'; this.parentElement.style.fontWeight='bold';">`
-                                : `<span>${initials}</span>`
-                            }
+                            ${initials}
                         </div>
                     </div>
                     <span class="availability-badge ${isAvailable ? 'available' : 'unavailable'}">
