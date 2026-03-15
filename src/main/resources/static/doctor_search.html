@@ -94,6 +94,17 @@
         </div>
     </div>
 
+    <!-- LOCATION BUTTON -->
+    <div class="location-bar">
+        <button id="locationBtn" onclick="getLocation()" class="btn-location">
+            <i class="fas fa-map-marker-alt"></i> Use My Location
+        </button>
+        <span id="locationStatus" style="display:none; font-size:0.875rem; color:#10B981; font-weight:500;"></span>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <script src="/js/notification_handler.js"></script>
     <script src="/js/doctor_search.js"></script>
 </body>
