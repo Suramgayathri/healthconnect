@@ -81,13 +81,13 @@ public class AuthController {
             }
 
             String username = authentication.getName(); // This is the email or phone used for login
-            
+
             // Find user by email or phone
             Optional<User> userOpt = userRepository.findByEmail(username);
             if (userOpt.isEmpty()) {
                 userOpt = userRepository.findByPhone(username);
             }
-            
+
             if (userOpt.isEmpty()) {
                 return ResponseEntity.status(404).body(Map.of("error", "User not found"));
             }
@@ -105,7 +105,7 @@ public class AuthController {
                 if (patientOpt.isPresent()) {
                     Patient patient = patientOpt.get();
                     profile.put("fullName", patient.getFullName());
-                    profile.put("dob", patient.getDob());
+                    profile.put("dob", patient.getDateOfBirth());
                     profile.put("gender", patient.getGender());
                     profile.put("bloodGroup", patient.getBloodGroup());
                     profile.put("address", patient.getAddress());
@@ -140,33 +140,32 @@ public class AuthController {
         }
     }
 
-
     @PostMapping("/register/doctor")
     public ResponseEntity<?> registerDoctor(@RequestParam("fullName") String fullName,
-                                           @RequestParam("email") String email,
-                                           @RequestParam("phone") String phone,
-                                           @RequestParam("password") String password,
-                                           @RequestParam("specialization") String specialization,
-                                           @RequestParam("licenseNumber") String licenseNumber,
-                                           @RequestParam(value = "qualifications", required = false) String qualifications,
-                                           @RequestParam(value = "experienceYears", required = false, defaultValue = "0") Integer experienceYears,
-                                           @RequestParam(value = "languagesSpoken", required = false) String languagesSpoken,
-                                           @RequestParam(value = "consultationFee", required = false, defaultValue = "0") Double consultationFee,
-                                           @RequestParam(value = "about", required = false) String about,
-                                           @RequestParam(value = "profilePhoto", required = false) org.springframework.web.multipart.MultipartFile profilePhoto) {
+            @RequestParam("email") String email,
+            @RequestParam("phone") String phone,
+            @RequestParam("password") String password,
+            @RequestParam("specialization") String specialization,
+            @RequestParam("licenseNumber") String licenseNumber,
+            @RequestParam(value = "qualifications", required = false) String qualifications,
+            @RequestParam(value = "experienceYears", required = false, defaultValue = "0") Integer experienceYears,
+            @RequestParam(value = "languagesSpoken", required = false) String languagesSpoken,
+            @RequestParam(value = "consultationFee", required = false, defaultValue = "0") Double consultationFee,
+            @RequestParam(value = "about", required = false) String about,
+            @RequestParam(value = "profilePhoto", required = false) org.springframework.web.multipart.MultipartFile profilePhoto) {
         logger.debug("Doctor registration attempt - email: {}, specialization: {}", email, specialization);
-        
+
         // Validate required fields
         if (fullName == null || fullName.trim().isEmpty()) {
             logger.error("Doctor registration failed - full name is required");
             return ResponseEntity.badRequest().body(Map.of("error", "Full name is required"));
         }
-        
+
         if (specialization == null || specialization.trim().isEmpty()) {
             logger.error("Doctor registration failed - specialization is required");
             return ResponseEntity.badRequest().body(Map.of("error", "Specialization is required"));
         }
-        
+
         if (licenseNumber == null || licenseNumber.trim().isEmpty()) {
             logger.error("Doctor registration failed - license number is required");
             return ResponseEntity.badRequest().body(Map.of("error", "License number is required"));
@@ -190,20 +189,20 @@ public class AuthController {
 
             // Create user account
             User user = User.builder()
-                    .username(email) // Use email as username
+                    .username(email)
                     .firstName(firstName)
                     .lastName(lastName)
                     .email(email)
                     .phone(phone)
-                    .passwordPlain(password) // Store plain password in password column
-                    .password(passwordEncoder.encode(password)) // Store hashed in password_hash
+                    .password(passwordEncoder.encode(password))
                     .role(Role.DOCTOR)
                     .isActive(true)
                     .build();
             user = userRepository.save(user);
             logger.info("User created for doctor: {}", email);
 
-            // Handle profile photo upload (optional - save to uploads folder or just store filename)
+            // Handle profile photo upload (optional - save to uploads folder or just store
+            // filename)
             String photoPath = null;
             if (profilePhoto != null && !profilePhoto.isEmpty()) {
                 // For now, just store the original filename

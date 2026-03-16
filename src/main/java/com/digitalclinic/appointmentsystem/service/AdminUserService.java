@@ -1,8 +1,10 @@
 package com.digitalclinic.appointmentsystem.service;
 
+import com.digitalclinic.appointmentsystem.dto.AdminUserDTO;
 import com.digitalclinic.appointmentsystem.dto.DoctorAdminDTO;
 import com.digitalclinic.appointmentsystem.model.Doctor;
 import com.digitalclinic.appointmentsystem.model.Patient;
+import com.digitalclinic.appointmentsystem.model.Role;
 import com.digitalclinic.appointmentsystem.model.User;
 import com.digitalclinic.appointmentsystem.repository.DoctorRepository;
 import com.digitalclinic.appointmentsystem.repository.PatientRepository;
@@ -25,9 +27,10 @@ public class AdminUserService {
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
 
-    public Page<User> getAllUsers(int page, int size) {
+    public Page<AdminUserDTO> getAllUsers(int page, int size) {
         logger.debug("Fetching all users - page: {}, size: {}", page, size);
-        return userRepository.findAll(PageRequest.of(page, size));
+        Page<User> users = userRepository.findAll(PageRequest.of(page, size));
+        return users.map(this::convertAdminToDTO);
     }
 
     public Page<Patient> getAllPatients(int page, int size) {
@@ -39,6 +42,12 @@ public class AdminUserService {
         logger.debug("Fetching all doctors - page: {}, size: {}", page, size);
         Page<Doctor> doctors = doctorRepository.findAll(PageRequest.of(page, size));
         return doctors.map(this::convertToDTO);
+    }
+
+    public Page<AdminUserDTO> getAllAdmins(int page, int size) {
+        logger.debug("Fetching all admins - page: {}, size: {}", page, size);
+        Page<User> admins = userRepository.findByRole(Role.ADMIN, PageRequest.of(page, size));
+        return admins.map(this::convertAdminToDTO);
     }
 
     private DoctorAdminDTO convertToDTO(Doctor doctor) {
@@ -77,6 +86,21 @@ public class AdminUserService {
                 .build();
         logger.debug("Doctor DTO created for doctor {}: verified={}, available={}", doctor.getId(), dto.getIsVerified(), dto.getIsAvailable());
         return dto;
+    }
+
+    private AdminUserDTO convertAdminToDTO(User user) {
+        logger.debug("Converting admin user {} to DTO", user.getId());
+        return AdminUserDTO.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .active(user.isActive())
+                .role(user.getRole().name())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
     }
 
     @Transactional
@@ -135,13 +159,14 @@ public class AdminUserService {
     }
 
     // Get single doctor by ID
-    public Doctor getDoctorById(Long doctorId) {
+    public DoctorAdminDTO getDoctorById(Long doctorId) {
         logger.debug("Fetching doctor by id: {}", doctorId);
-        return doctorRepository.findById(doctorId)
+        Doctor doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> {
                     logger.error("Doctor not found with id: {}", doctorId);
                     return new RuntimeException("Doctor not found");
                 });
+        return convertToDTO(doctor);
     }
 
     // Get single patient by ID
@@ -155,12 +180,13 @@ public class AdminUserService {
     }
 
     // Get single user by ID
-    public User getUserById(Long userId) {
+    public AdminUserDTO getUserById(Long userId) {
         logger.debug("Fetching user by id: {}", userId);
-        return userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     logger.error("User not found with id: {}", userId);
                     return new RuntimeException("User not found");
                 });
+        return convertAdminToDTO(user);
     }
 }

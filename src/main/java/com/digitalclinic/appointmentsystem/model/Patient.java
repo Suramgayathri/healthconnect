@@ -37,7 +37,8 @@ public class Patient {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-    private LocalDate dob;
+    @Column(name = "dob")
+    private LocalDate dateOfBirth;
 
     @Column(length = 20)
     private String gender; // MALE, FEMALE, OTHER

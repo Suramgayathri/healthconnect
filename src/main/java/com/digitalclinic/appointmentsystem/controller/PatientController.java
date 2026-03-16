@@ -1,6 +1,7 @@
 package com.digitalclinic.appointmentsystem.controller;
 
 import com.digitalclinic.appointmentsystem.dto.PatientProfileDTO;
+import com.digitalclinic.appointmentsystem.dto.PatientVitalDTO;
 import com.digitalclinic.appointmentsystem.security.UserDetailsImpl;
 import com.digitalclinic.appointmentsystem.service.PatientService;
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -60,5 +62,19 @@ public class PatientController {
     public ResponseEntity<Map<String, Object>> getMyStats(Authentication auth) {
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         return ResponseEntity.ok(patientService.getPatientStats(userDetails.getId()));
+    }
+
+    @GetMapping("/dashboard")
+    @PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<Map<String, Object>> getDashboard(Authentication auth) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        return ResponseEntity.ok(patientService.getPatientDashboard(userDetails.getId()));
+    }
+
+    @GetMapping("/vitals")
+    @PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<List<PatientVitalDTO>> getMyVitals(Authentication auth) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        return ResponseEntity.ok(patientService.getPatientVitals(userDetails.getId()));
     }
 }

@@ -25,14 +25,14 @@ async function fetchAndRenderSchedule(token) {
     }
 
     try {
-        const response = await fetch('/api/appointments/doctor/me', {
+        const response = await fetch('/api/doctors/appointments?size=100', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (!response.ok) throw new Error("Failed to load schedule");
 
         const data = await response.json();
-        allAppointments = data.content || data; // handle pagination structure if any
+        allAppointments = data.content || data; // handle pagination structure
 
         renderCalendar();
     } catch (e) {
@@ -109,7 +109,7 @@ function getFilteredEvents() {
         if (isEmergency && app.status !== 'COMPLETED') color = '#EF4444'; // danger overrides
 
         events.push({
-            id: app.id,
+            id: app.appointmentId || app.id,
             title: `${app.patientName || app.patient?.name || 'Patient'} ${isEmergency ? '(URGENT)' : ''}`,
             start: startDateTime,
             backgroundColor: color,
@@ -135,6 +135,8 @@ function renderCalendar() {
         allDaySlot: false,
         events: getFilteredEvents(),
         eventClick: function (info) {
+            console.log(info.event);
+            
             showAppointmentDetails(info.event.extendedProps, info.event.id);
         }
     });
@@ -150,7 +152,10 @@ function showAppointmentDetails(app, id) {
         'PENDING': 'var(--warning)',
         'CONFIRMED': 'var(--secondary)',
         'COMPLETED': 'var(--primary)',
-        'CANCELLED': 'var(--danger)'
+        'CANCELLED': 'var(--danger)',
+        'SCHEDULED': 'var(--warning)',
+        'IN_PROGRESS': '#F59E0B',
+        'NO_SHOW': 'gray'
     };
     const c = statusBadgeColors[app.status] || 'gray';
 
@@ -169,20 +174,23 @@ function showAppointmentDetails(app, id) {
         </div>
         <div class="details-item">
             <label>Reason</label>
-            <div>${app.reason || 'Not provided'}</div>
+            <div>${app.reasonForVisit || app.reason || app.chiefComplaint || 'Not provided'}</div>
         </div>
     `;
 
+    // Use appointmentId if id is undefined
+    const appointmentId = id || app.appointmentId || app.id;
+
     // actions
-    let btnHtml = '';
-    if (app.status === 'PENDING') {
-        btnHtml += `<button class="btn btn-success" onclick="openActionModal(${id}, 'CONFIRM')">Confirm</button>`;
-        btnHtml += `<button class="btn btn-outline-danger" onclick="openActionModal(${id}, 'CANCEL')">Cancel</button>`;
-    } else if (app.status === 'CONFIRMED') {
-        btnHtml += `<button class="btn btn-primary" onclick="openActionModal(${id}, 'COMPLETE')">Mark Completed</button>`;
-        btnHtml += `<button class="btn btn-outline-danger" onclick="openActionModal(${id}, 'CANCEL')">Cancel</button>`;
+    let btnHtml = `<button class="btn btn-primary w-100 mb-2" onclick="window.location.href='app_updation.html?id=${appointmentId}'"><i class="fas fa-stethoscope"></i> Process Appointment</button>`;
+    if (app.status === 'PENDING' || app.status === 'SCHEDULED') {
+        btnHtml += `<button class="btn btn-success" onclick="openActionModal(${appointmentId}, 'CONFIRM')">Confirm</button>`;
+        btnHtml += `<button class="btn btn-outline-danger" onclick="openActionModal(${appointmentId}, 'CANCEL')">Cancel</button>`;
+    } else if (app.status === 'CONFIRMED' || app.status === 'IN_PROGRESS') {
+        btnHtml += `<button class="btn btn-primary" onclick="openActionModal(${appointmentId}, 'COMPLETE')">Mark Completed</button>`;
+        btnHtml += `<button class="btn btn-outline-danger" onclick="openActionModal(${appointmentId}, 'CANCEL')">Cancel</button>`;
     } else {
-        btnHtml += `<p class="text-muted text-sm">No actions available.</p>`;
+        btnHtml += `<p class="text-muted text-sm">No other actions available.</p>`;
     }
     actions.innerHTML = btnHtml;
 
@@ -231,20 +239,31 @@ async function executeAction() {
     const type = document.getElementById('actionType').value;
     const token = localStorage.getItem('token');
 
-    let endpoint = `/api/appointments/${id}/${type.toLowerCase()}`;
-    // E.g. /api/appointments/1/confirm, /cancel, /complete (assuming these map to backend endpoints correctly)
+    // Map action types to status values
+    const statusMap = {
+        'CONFIRM': 'CONFIRMED',
+        'CANCEL': 'CANCELLED',
+        'COMPLETE': 'COMPLETED'
+    };
+
+    const status = statusMap[type] || type;
+    const endpoint = `/api/appointments/${id}/status?status=${status}`;
 
     try {
         const response = await fetch(endpoint, {
-            method: 'POST', // or PUT depending on backend
+            method: 'PUT',
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        if (!response.ok) throw new Error("Action failed");
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || "Action failed");
+        }
 
         modal.style.display = 'none';
         refreshSchedule();
     } catch (e) {
         alert(e.message);
+        console.error('Error executing action:', e);
     }
 }

@@ -1,17 +1,8 @@
 package com.digitalclinic.appointmentsystem.service;
 
-import com.digitalclinic.appointmentsystem.dto.AppointmentDTO;
-import com.digitalclinic.appointmentsystem.dto.AppointmentRequestDTO;
-import com.digitalclinic.appointmentsystem.dto.AvailableSlotDTO;
-import com.digitalclinic.appointmentsystem.dto.EmergencyBookingDTO;
-import com.digitalclinic.appointmentsystem.model.Appointment;
-import com.digitalclinic.appointmentsystem.model.ClinicLocation;
-import com.digitalclinic.appointmentsystem.model.Doctor;
-import com.digitalclinic.appointmentsystem.model.Patient;
-import com.digitalclinic.appointmentsystem.repository.AppointmentRepository;
-import com.digitalclinic.appointmentsystem.repository.ClinicLocationRepository;
-import com.digitalclinic.appointmentsystem.repository.DoctorRepository;
-import com.digitalclinic.appointmentsystem.repository.PatientRepository;
+import com.digitalclinic.appointmentsystem.dto.*;
+import com.digitalclinic.appointmentsystem.model.*;
+import com.digitalclinic.appointmentsystem.repository.*;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +38,12 @@ public class AppointmentService {
 
     @Autowired
     private ClinicLocationRepository locationRepository;
+
+    @Autowired
+    private PatientVitalRepository patientVitalRepository;
+
+    @Autowired
+    private LabTestRepository labTestRepository;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -201,10 +199,11 @@ public class AppointmentService {
         doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
 
-        List<Appointment> existingAppointments = appointmentRepository.findDoctorAppointmentsByDateAndStatus(
-                doctorId, date, Appointment.AppointmentStatus.SCHEDULED);
+        List<Appointment> existingAppointments = appointmentRepository.findByDoctorIdAndAppointmentDate(
+                doctorId, date);
 
         List<LocalTime> bookedTimes = existingAppointments.stream()
+                .filter(app -> app.getStatus() != Appointment.AppointmentStatus.CANCELLED)
                 .map(Appointment::getAppointmentTime)
                 .collect(Collectors.toList());
 
@@ -276,6 +275,116 @@ public class AppointmentService {
         return appointments.map(this::convertToDTO);
     }
 
+    public Page<AppointmentDTO> getDoctorAppointments(Long doctorUserId, int page, int size, LocalDate date) {
+        logger.info("Fetching appointments for doctor user ID: {} on date: {}", doctorUserId, date);
+        Doctor doctor = doctorRepository.findByUser_Id(doctorUserId)
+                .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("appointmentTime").ascending());
+        Page<Appointment> appointments;
+        if (date != null) {
+            appointments = appointmentRepository.findByDoctorIdAndAppointmentDate(doctor.getId(), date, pageable);
+        } else {
+            appointments = appointmentRepository.findByDoctorIdOrderByAppointmentDateDescAppointmentTimeDesc(doctor.getId(), pageable);
+        }
+
+        return appointments.map(this::convertToDTO);
+    }
+
+    public AppointmentDetailsDTO getAppointmentDetailsForDoctor(Long appointmentId, Long doctorUserId) {
+        logger.info("Fetching appointment details for doctor. ID: {}", appointmentId);
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        if (!appointment.getDoctor().getUser().getId().equals(doctorUserId)) {
+            throw new RuntimeException("Unauthorized to view this appointment");
+        }
+
+        Patient patient = appointment.getPatient();
+        int age = 0;
+        if (patient.getDateOfBirth() != null) {
+            age = java.time.Period.between(patient.getDateOfBirth(), LocalDate.now()).getYears();
+        }
+
+        PatientShortDTO patientDTO = PatientShortDTO.builder()
+                .patientId(patient.getId())
+                .name(patient.getFullName())
+                .age(age)
+                .gender(patient.getGender())
+                .bloodGroup(patient.getBloodGroup())
+                .build();
+
+        return AppointmentDetailsDTO.builder()
+                .appointmentId(appointment.getId())
+                .appointmentTime(appointment.getAppointmentTime())
+                .status(appointment.getStatus().name())
+                .patient(patientDTO)
+                .symptoms(appointment.getSymptoms())
+                .build();
+    }
+
+    public void recordVitals(Long appointmentId, Long doctorUserId, PatientVitalRequest request) {
+        logger.info("Recording vitals for appointment: {}", appointmentId);
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        if (!appointment.getDoctor().getUser().getId().equals(doctorUserId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        PatientVital vital = PatientVital.builder()
+                .patient(appointment.getPatient())
+                .bloodPressure(request.getBloodPressure())
+                .heartRate(request.getHeartRate())
+                .temperature(request.getTemperature())
+                .weight(request.getWeight())
+                .height(request.getHeight())
+                .oxygenSaturation(request.getOxygenSaturation())
+                .recordedBy(appointment.getDoctor().getUser())
+                .build();
+
+        if (request.getWeight() != null && request.getHeight() != null && request.getHeight() > 0) {
+            double heightInMeters = request.getHeight() / 100.0;
+            double bmi = request.getWeight() / (heightInMeters * heightInMeters);
+            vital.setNotes("Automatically calculated BMI: " + String.format("%.2f", bmi));
+        }
+
+        patientVitalRepository.save(vital);
+    }
+
+    public void updateNotes(Long appointmentId, Long doctorUserId, AppointmentNotesRequest request) {
+        logger.info("Updating notes for appointment: {}", appointmentId);
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        if (!appointment.getDoctor().getUser().getId().equals(doctorUserId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        appointment.setDiagnosis(request.getDiagnosis());
+        appointment.setDoctorNotes(request.getDoctorNotes());
+        appointmentRepository.save(appointment);
+    }
+
+    public void orderLabTest(Long appointmentId, Long doctorUserId, LabTestRequest request) {
+        logger.info("Ordering lab test for appointment: {}", appointmentId);
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        if (!appointment.getDoctor().getUser().getId().equals(doctorUserId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        LabTest labTest = LabTest.builder()
+                .patient(appointment.getPatient())
+                .doctor(appointment.getDoctor())
+                .testName(request.getTestName())
+                .status("PENDING")
+                .build();
+
+        labTestRepository.save(labTest);
+    }
+
     public List<AppointmentDTO> getDoctorDailySchedule(Long doctorUserId, LocalDate date) {
         logger.info("Fetching daily schedule for doctor user ID: {} on date: {}", doctorUserId, date);
         Doctor doctor = doctorRepository.findByUser_Id(doctorUserId)
@@ -326,6 +435,42 @@ public class AppointmentService {
         return convertToDTO(savedAppointment);
     }
 
+    public AppointmentDTO updateAppointment(Long appointmentId, Long doctorUserId, 
+            com.digitalclinic.appointmentsystem.dto.AppointmentUpdateRequestDTO requestDTO) {
+        logger.info("Updating appointment {} by doctor {}", appointmentId, doctorUserId);
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        if (!appointment.getDoctor().getUser().getId().equals(doctorUserId)) {
+            throw new RuntimeException("Unauthorized to update this appointment");
+        }
+
+        // Update diagnosis
+        if (requestDTO.getDiagnosis() != null && !requestDTO.getDiagnosis().trim().isEmpty()) {
+            appointment.setDiagnosis(requestDTO.getDiagnosis().trim());
+        }
+
+        // Update doctor notes
+        if (requestDTO.getDoctorNotes() != null) {
+            appointment.setDoctorNotes(requestDTO.getDoctorNotes().trim());
+        }
+
+        // Update status
+        if (requestDTO.getStatus() != null && !requestDTO.getStatus().trim().isEmpty()) {
+            try {
+                Appointment.AppointmentStatus status = Appointment.AppointmentStatus.valueOf(
+                        requestDTO.getStatus().toUpperCase());
+                appointment.setStatus(status);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid status provided: " + requestDTO.getStatus());
+            }
+        }
+
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+        logger.info("Appointment {} updated successfully", appointmentId);
+        return convertToDTO(savedAppointment);
+    }
+
     public AppointmentDTO cancelAppointment(Long appointmentId, Long patientUserId) {
         logger.info("Cancelling appointment {} by patient {}", appointmentId, patientUserId);
         Appointment appointment = appointmentRepository.findById(appointmentId)
@@ -351,6 +496,9 @@ public class AppointmentService {
         dto.setAppointmentId(appointment.getId());
         dto.setPatientId(appointment.getPatient().getId());
         dto.setPatientName(appointment.getPatient().getFullName());
+        dto.setPatientGender(appointment.getPatient().getGender());
+        dto.setPatientBloodGroup(appointment.getPatient().getBloodGroup());
+        dto.setPatientDateOfBirth(appointment.getPatient().getDateOfBirth());
         if (appointment.getPatient().getUser() != null) {
             dto.setPatientPhone(appointment.getPatient().getUser().getPhone());
         }

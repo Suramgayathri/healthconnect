@@ -38,6 +38,20 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
         long countByDoctorIdAndAppointmentDateAndStatus(Long doctorId, LocalDate date,
                         Appointment.AppointmentStatus status);
 
+        long countByDoctorIdAndAppointmentDate(Long doctorId, LocalDate date);
+
+        long countByDoctorIdAndStatus(Long doctorId, Appointment.AppointmentStatus status);
+
+        @Query("SELECT COUNT(DISTINCT a.patient.id) FROM Appointment a WHERE a.doctor.id = :doctorId")
+        long countDistinctPatientsByDoctorId(@Param("doctorId") Long doctorId);
+
+        @Query("SELECT a FROM Appointment a WHERE a.doctor.id = :doctorId AND a.appointmentDate = :date AND a.isEmergency = true AND a.status = 'SCHEDULED'")
+        List<Appointment> findEmergencyAppointments(@Param("doctorId") Long doctorId, @Param("date") LocalDate date);
+
+        List<Appointment> findByDoctorIdAndAppointmentDateOrderByAppointmentTimeAsc(Long doctorId, LocalDate date);
+
+        Page<Appointment> findByDoctorIdAndAppointmentDate(Long doctorId, LocalDate date, Pageable pageable);
+
         boolean existsByDoctorIdAndAppointmentDateAndAppointmentTimeAndStatusNot(
                         Long doctorId, LocalDate date, LocalTime time, Appointment.AppointmentStatus status);
 
@@ -56,4 +70,19 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
         long countByDoctorIdAndAppointmentDateAndAppointmentTimeBetweenAndStatusNot(
                         Long doctorId, LocalDate date, LocalTime startTime, LocalTime endTime,
                         Appointment.AppointmentStatus status);
+
+        // Patient dashboard queries
+        long countByPatientId(Long patientId);
+
+        @Query("SELECT COUNT(a) FROM Appointment a WHERE a.patient.id = :patientId AND a.appointmentDate >= CURRENT_DATE AND a.status IN ('SCHEDULED', 'CONFIRMED')")
+        long countUpcomingAppointmentsByPatientId(@Param("patientId") Long patientId);
+
+        @Query("SELECT COUNT(a) FROM Appointment a WHERE a.patient.id = :patientId AND a.status = 'COMPLETED'")
+        long countCompletedAppointmentsByPatientId(@Param("patientId") Long patientId);
+
+        @Query("SELECT COUNT(a) FROM Appointment a WHERE a.patient.id = :patientId AND a.status = 'CANCELLED'")
+        long countCancelledAppointmentsByPatientId(@Param("patientId") Long patientId);
+
+        @Query("SELECT a FROM Appointment a WHERE a.patient.id = :patientId AND a.appointmentDate >= CURRENT_DATE AND a.status IN ('SCHEDULED', 'CONFIRMED') ORDER BY a.appointmentDate ASC, a.appointmentTime ASC")
+        List<Appointment> findUpcomingAppointmentsByPatientId(@Param("patientId") Long patientId);
 }

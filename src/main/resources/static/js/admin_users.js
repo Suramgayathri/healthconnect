@@ -77,7 +77,7 @@ async function loadUsers() {
         endpoint = `${API_BASE}/doctors?page=${currentPage}&size=${pageSize}`;
     } else {
         tbodyId = 'adminsTableBody';
-        endpoint = `${API_BASE}?page=${currentPage}&size=${pageSize}`;
+        endpoint = `${API_BASE}/admins?page=${currentPage}&size=${pageSize}`;
     }
 
     const tbody = document.getElementById(tbodyId);
@@ -207,27 +207,24 @@ function displayAdmins(users, totalPages) {
     const tbody = document.getElementById('adminsTableBody');
     if (!tbody) return;
 
-    // Filter for admins only
-    const admins = users.filter(u => u.role === 'ADMIN' || u.role === 'admin');
-
-    if (admins.length === 0) {
+    if (users.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" class="text-center">No admins found</td></tr>';
         return;
     }
 
-    tbody.innerHTML = admins.map(admin => `
+    tbody.innerHTML = users.map(admin => `
         <tr>
             <td>#${admin.id}</td>
             <td>${admin.firstName || ''} ${admin.lastName || ''}</td>
             <td>${admin.email || 'N/A'}</td>
             <td>${admin.phone || 'N/A'}</td>
-            <td><span class="badge ${admin.isActive ? 'badge-success' : 'badge-danger'}">${admin.isActive ? 'Active' : 'Inactive'}</span></td>
+            <td><span class="badge ${admin.active ? 'badge-success' : 'badge-danger'}">${admin.active ? 'Active' : 'Inactive'}</span></td>
             <td>${formatDate(admin.createdAt)}</td>
             <td>
                 <div class="action-buttons">
                     <button onclick="toggleUserStatus(${admin.id}, 'admin')" class="action-btn toggle" title="Toggle Status">
-                        <i class="fas fa-toggle-${admin.isActive ? 'on' : 'off'}"></i>
-                        <span>${admin.isActive ? 'On' : 'Off'}</span>
+                        <i class="fas fa-toggle-${admin.active ? 'on' : 'off'}"></i>
+                        <span>${admin.active ? 'On' : 'Off'}</span>
                     </button>
                     <button onclick="viewUserDetails(${admin.id}, 'admin')" class="action-btn view" title="View Details">
                         <i class="fas fa-eye"></i>
@@ -537,8 +534,8 @@ function renderUserModal(user, type) {
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Status</span>
-                    <span class="detail-value badge ${user.isActive ? 'badge-success' : 'badge-danger'}">
-                        ${user.isActive ? 'Active' : 'Inactive'}
+                    <span class="detail-value badge ${user.active ? 'badge-success' : 'badge-danger'}">
+                        ${user.active ? 'Active' : 'Inactive'}
                     </span>
                 </div>
             </div>
@@ -547,7 +544,7 @@ function renderUserModal(user, type) {
         // Admin action buttons
         actions = `
             <button class="action-btn toggle" onclick="toggleUserStatus(${user.id}, 'admin')">
-                <i class="fas fa-toggle-${user.isActive ? 'on' : 'off'}"></i> ${user.isActive ? 'Suspend' : 'Activate'}
+                <i class="fas fa-toggle-${user.active ? 'on' : 'off'}"></i> ${user.active ? 'Suspend' : 'Activate'}
             </button>
         `;
     }

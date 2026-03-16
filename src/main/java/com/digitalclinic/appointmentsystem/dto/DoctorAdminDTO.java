@@ -1,5 +1,6 @@
 package com.digitalclinic.appointmentsystem.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -42,6 +43,7 @@ public class DoctorAdminDTO {
         private Long id;
         private String email;
         private String phone;
+        @JsonProperty("isActive")
         private boolean active;
         private LocalDateTime createdAt;
     }

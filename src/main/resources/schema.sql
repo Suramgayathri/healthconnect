@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS appointments (
     appointment_time TIME NOT NULL,
     consultation_type ENUM('IN_PERSON', 'VIDEO') DEFAULT 'IN_PERSON',
     reason_for_visit TEXT,
-    status ENUM('SCHEDULED', 'COMPLETED', 'CANCELLED', 'NO_SHOW', 'IN_PROGRESS') DEFAULT 'SCHEDULED',
+    status ENUM('SCHEDULED', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW', 'IN_PROGRESS') DEFAULT 'SCHEDULED',
     is_emergency BOOLEAN DEFAULT FALSE,
     urgency_level ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL'),
     consultation_duration INT, -- Actual duration in minutes

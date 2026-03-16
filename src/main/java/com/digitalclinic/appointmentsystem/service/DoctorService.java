@@ -1,6 +1,12 @@
 package com.digitalclinic.appointmentsystem.service;
 
+import com.digitalclinic.appointmentsystem.dto.AppointmentDTO;
+import com.digitalclinic.appointmentsystem.dto.DashboardMetricsDTO;
+import com.digitalclinic.appointmentsystem.dto.DoctorDashboardDTO;
 import com.digitalclinic.appointmentsystem.dto.DoctorProfileDTO;
+import com.digitalclinic.appointmentsystem.exception.ResourceNotFoundException;
+import com.digitalclinic.appointmentsystem.model.Appointment;
+import com.digitalclinic.appointmentsystem.repository.AppointmentRepository;
 import com.digitalclinic.appointmentsystem.dto.DoctorSearchDTO;
 import com.digitalclinic.appointmentsystem.dto.DoctorScheduleDTO;
 import com.digitalclinic.appointmentsystem.model.Doctor;
@@ -49,7 +55,62 @@ public class DoctorService {
     private ClinicLocationRepository clinicLocationRepository;
 
     @Autowired
+    private AppointmentRepository appointmentRepository;
+
+    @Autowired
     private ModelMapper modelMapper;
+
+    public DoctorDashboardDTO getDashboardData(Long userId) {
+        logger.info("Fetching dashboard data for doctor user ID: {}", userId);
+        Doctor doctor = doctorRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
+
+        LocalDate today = LocalDate.now();
+
+        List<AppointmentDTO> todayAppointments = appointmentRepository
+                .findByDoctorIdAndAppointmentDateOrderByAppointmentTimeAsc(doctor.getId(), today)
+                .stream()
+                .map(this::convertToAppointmentDTO)
+                .collect(Collectors.toList());
+
+        List<AppointmentDTO> emergencyAppointments = appointmentRepository
+                .findEmergencyAppointments(doctor.getId(), today)
+                .stream()
+                .map(this::convertToAppointmentDTO)
+                .collect(Collectors.toList());
+
+        DashboardMetricsDTO metrics = DashboardMetricsDTO.builder()
+                .todayAppointments(appointmentRepository.countByDoctorIdAndAppointmentDate(doctor.getId(), today))
+                .totalPatients(appointmentRepository.countDistinctPatientsByDoctorId(doctor.getId()))
+                .pendingAppointments(appointmentRepository.countByDoctorIdAndStatus(doctor.getId(), Appointment.AppointmentStatus.SCHEDULED))
+                .completedAppointments(appointmentRepository.countByDoctorIdAndStatus(doctor.getId(), Appointment.AppointmentStatus.COMPLETED))
+                .build();
+
+        return DoctorDashboardDTO.builder()
+                .todayAppointments(todayAppointments)
+                .emergencyAppointments(emergencyAppointments)
+                .metrics(metrics)
+                .build();
+    }
+
+    private AppointmentDTO convertToAppointmentDTO(Appointment appointment) {
+        AppointmentDTO dto = modelMapper.map(appointment, AppointmentDTO.class);
+        dto.setAppointmentId(appointment.getId());
+        dto.setPatientId(appointment.getPatient().getId());
+        dto.setPatientName(appointment.getPatient().getFullName());
+        if (appointment.getPatient().getUser() != null) {
+            dto.setPatientPhone(appointment.getPatient().getUser().getPhone());
+        }
+        dto.setDoctorId(appointment.getDoctor().getId());
+        dto.setDoctorName(appointment.getDoctor().getFullName());
+        if (appointment.getConsultationType() != null)
+            dto.setConsultationType(appointment.getConsultationType().name());
+        if (appointment.getStatus() != null)
+            dto.setStatus(appointment.getStatus().name());
+        if (appointment.getUrgencyLevel() != null)
+            dto.setUrgencyLevel(appointment.getUrgencyLevel().name());
+        return dto;
+    }
 
     public Page<DoctorProfileDTO> searchDoctors(DoctorSearchDTO searchDTO) {
         logger.info("Searching doctors with filters");
@@ -75,7 +136,7 @@ public class DoctorService {
     public DoctorProfileDTO getDoctorProfile(Long doctorId) {
         logger.info("Fetching doctor profile ID: {}", doctorId);
         Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with ID: " + doctorId));
         return convertToProfileDTO(doctor);
     }
 
@@ -135,6 +196,104 @@ public class DoctorService {
         doctorLocationRepository.delete(doctorLocation);
     }
 
+    public List<com.digitalclinic.appointmentsystem.dto.ClinicLocationDTO> getDoctorClinics(Long userId) {
+        logger.info("Fetching clinics for doctor user ID: {}", userId);
+        Doctor doctor = doctorRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+        
+        List<DoctorLocation> doctorLocations = doctorLocationRepository.findByDoctorId(doctor.getId());
+        return doctorLocations.stream()
+                .map(dl -> convertToClinicLocationDTO(dl.getLocation(), dl.getConsultationFee()))
+                .collect(Collectors.toList());
+    }
+
+    public List<com.digitalclinic.appointmentsystem.dto.ClinicLocationDTO> getDoctorClinicsByDoctorId(Long doctorId) {
+        logger.info("Fetching clinics for doctor ID: {}", doctorId);
+        List<DoctorLocation> doctorLocations = doctorLocationRepository.findByDoctorId(doctorId);
+        return doctorLocations.stream()
+                .map(dl -> convertToClinicLocationDTO(dl.getLocation(), dl.getConsultationFee()))
+                .collect(Collectors.toList());
+    }
+
+    public com.digitalclinic.appointmentsystem.dto.ClinicLocationDTO addClinic(Long userId, com.digitalclinic.appointmentsystem.dto.ClinicLocationDTO dto) {
+        logger.info("Adding new clinic for doctor user ID: {}", userId);
+        Doctor doctor = doctorRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+        // Create new clinic location
+        ClinicLocation clinic = ClinicLocation.builder()
+                .clinicName(dto.getClinicName())
+                .address(dto.getAddress())
+                .city(dto.getCity())
+                .state(dto.getState())
+                .pincode(dto.getPincode())
+                .phone(dto.getPhone())
+                .latitude(dto.getLatitude())
+                .longitude(dto.getLongitude())
+                .facilities(dto.getFacilities())
+                .operatingHours(dto.getOperatingHours())
+                .build();
+
+        ClinicLocation savedClinic = clinicLocationRepository.save(clinic);
+
+        // Link doctor to clinic
+        DoctorLocation doctorLocation = DoctorLocation.builder()
+                .doctor(doctor)
+                .location(savedClinic)
+                .consultationFee(dto.getConsultationFeeAtThisLocation() != null ? 
+                        dto.getConsultationFeeAtThisLocation() : doctor.getConsultationFee())
+                .isPrimary(false)
+                .build();
+
+        doctorLocationRepository.save(doctorLocation);
+
+        return convertToClinicLocationDTO(savedClinic, doctorLocation.getConsultationFee());
+    }
+
+    public com.digitalclinic.appointmentsystem.dto.ClinicLocationDTO updateClinic(Long userId, Long clinicId, com.digitalclinic.appointmentsystem.dto.ClinicLocationDTO dto) {
+        logger.info("Updating clinic ID: {} for doctor user ID: {}", clinicId, userId);
+        Doctor doctor = doctorRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+        // Verify doctor has access to this clinic
+        DoctorLocation doctorLocation = doctorLocationRepository.findByDoctorIdAndLocationId(doctor.getId(), clinicId)
+                .orElseThrow(() -> new RuntimeException("Clinic not found or unauthorized"));
+
+        ClinicLocation clinic = doctorLocation.getLocation();
+        clinic.setClinicName(dto.getClinicName());
+        clinic.setAddress(dto.getAddress());
+        clinic.setCity(dto.getCity());
+        clinic.setState(dto.getState());
+        clinic.setPincode(dto.getPincode());
+        clinic.setPhone(dto.getPhone());
+        clinic.setLatitude(dto.getLatitude());
+        clinic.setLongitude(dto.getLongitude());
+        clinic.setFacilities(dto.getFacilities());
+        clinic.setOperatingHours(dto.getOperatingHours());
+
+        ClinicLocation updatedClinic = clinicLocationRepository.save(clinic);
+
+        // Update consultation fee if provided
+        if (dto.getConsultationFeeAtThisLocation() != null) {
+            doctorLocation.setConsultationFee(dto.getConsultationFeeAtThisLocation());
+            doctorLocationRepository.save(doctorLocation);
+        }
+
+        return convertToClinicLocationDTO(updatedClinic, doctorLocation.getConsultationFee());
+    }
+
+    public void deleteClinic(Long userId, Long clinicId) {
+        logger.info("Deleting clinic ID: {} for doctor user ID: {}", clinicId, userId);
+        Doctor doctor = doctorRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+        DoctorLocation doctorLocation = doctorLocationRepository.findByDoctorIdAndLocationId(doctor.getId(), clinicId)
+                .orElseThrow(() -> new RuntimeException("Clinic not found or unauthorized"));
+
+        // Only remove the doctor-clinic association, not the clinic itself
+        doctorLocationRepository.delete(doctorLocation);
+    }
+
     public List<DoctorScheduleDTO> getDoctorSchedules(Long doctorId) {
         logger.info("Fetching schedules for doctor ID: {}", doctorId);
         List<DoctorSchedule> schedules = doctorScheduleRepository.findByDoctorId(doctorId);
@@ -156,6 +315,34 @@ public class DoctorService {
                 .orElse(new DoctorSchedule());
 
         schedule.setDoctor(doctor);
+        schedule.setLocation(location);
+        schedule.setDayOfWeek(DoctorSchedule.DayOfWeek.valueOf(scheduleDTO.getDayOfWeek().toUpperCase()));
+        schedule.setStartTime(scheduleDTO.getStartTime());
+        schedule.setEndTime(scheduleDTO.getEndTime());
+        schedule.setSlotDuration(scheduleDTO.getSlotDuration());
+        schedule.setBreakStartTime(scheduleDTO.getBreakStartTime());
+        schedule.setBreakEndTime(scheduleDTO.getBreakEndTime());
+        schedule.setActive(scheduleDTO.isActive());
+
+        DoctorSchedule savedSchedule = doctorScheduleRepository.save(schedule);
+        return convertToScheduleDTO(savedSchedule);
+    }
+
+    public DoctorScheduleDTO updateSchedule(Long userId, Long scheduleId, DoctorScheduleDTO scheduleDTO) {
+        logger.info("Updating schedule ID: {} for user ID: {}", scheduleId, userId);
+        Doctor doctor = doctorRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+        
+        DoctorSchedule schedule = doctorScheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new RuntimeException("Schedule not found"));
+
+        if (!schedule.getDoctor().getId().equals(doctor.getId())) {
+            throw new RuntimeException("Unauthorized to update this schedule");
+        }
+
+        ClinicLocation location = clinicLocationRepository.findById(scheduleDTO.getLocationId())
+                .orElseThrow(() -> new RuntimeException("Location not found"));
+
         schedule.setLocation(location);
         schedule.setDayOfWeek(DoctorSchedule.DayOfWeek.valueOf(scheduleDTO.getDayOfWeek().toUpperCase()));
         schedule.setStartTime(scheduleDTO.getStartTime());
@@ -225,13 +412,45 @@ public class DoctorService {
                 .collect(Collectors.toList());
     }
 
+    public List<DoctorProfileDTO> getNearbyDoctors(Double lat, Double lng, Double radius) {
+        logger.info("Fetching nearby doctors at {}, {} within radius {}", lat, lng, radius);
+        // Simulating proximity by returning all available and verified doctors
+        // in a production app, this would use spatial queries (Haversine formula or GIS)
+        return doctorRepository.findAllAvailableAndVerified().stream()
+                .limit(5)
+                .map(this::convertToProfileDTO)
+                .collect(Collectors.toList());
+    }
+
     private DoctorProfileDTO convertToProfileDTO(Doctor doctor) {
         DoctorProfileDTO dto = modelMapper.map(doctor, DoctorProfileDTO.class);
         dto.setDoctorId(doctor.getId());
         if (doctor.getUser() != null) {
             dto.setEmail(doctor.getUser().getEmail());
+            dto.setPhone(doctor.getUser().getPhone());
         }
-        // Fetch locations and schedules explicitly if needed
+        
+        // Fetch and populate clinic locations
+        List<DoctorLocation> doctorLocations = doctorLocationRepository.findByDoctorId(doctor.getId());
+        List<com.digitalclinic.appointmentsystem.dto.ClinicLocationDTO> clinicDTOs = doctorLocations.stream()
+                .map(dl -> convertToClinicLocationDTO(dl.getLocation(), dl.getConsultationFee()))
+                .collect(Collectors.toList());
+        dto.setClinicLocations(clinicDTOs);
+        
+        // Fix profile photo URL - ensure it's a valid URL or use placeholder
+        if (dto.getProfilePhoto() == null || dto.getProfilePhoto().isEmpty()) {
+            String initials = doctor.getFullName() != null ? 
+                    doctor.getFullName().split(" ")[0].substring(0, 1) : "D";
+            dto.setProfilePhoto("https://ui-avatars.com/api/?name=" + initials + "&background=4F46E5&color=fff");
+        }
+        
+        return dto;
+    }
+
+    private com.digitalclinic.appointmentsystem.dto.ClinicLocationDTO convertToClinicLocationDTO(ClinicLocation clinic, BigDecimal consultationFee) {
+        com.digitalclinic.appointmentsystem.dto.ClinicLocationDTO dto = modelMapper.map(clinic, com.digitalclinic.appointmentsystem.dto.ClinicLocationDTO.class);
+        dto.setLocationId(clinic.getId());
+        dto.setConsultationFeeAtThisLocation(consultationFee);
         return dto;
     }
 

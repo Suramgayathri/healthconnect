@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 @Service
 public class UserService {
@@ -62,17 +61,16 @@ public class UserService {
         String lastName = nameParts.length > 1 ? nameParts[1] : "";
 
         // Create new user's account
-        User user = User.builder()
-                .username(registrationDTO.getEmail()) // Use email as username
-                .firstName(firstName)
-                .lastName(lastName)
-                .email(registrationDTO.getEmail())
-                .phone(registrationDTO.getPhone())
-                .passwordPlain(registrationDTO.getPassword()) // Store plain password in password column
-                .password(passwordEncoder.encode(registrationDTO.getPassword())) // Store hashed in password_hash
-                .role(registrationDTO.getRole())
-                .isActive(true)
-                .build();
+                User user = User.builder()
+                        .username(registrationDTO.getEmail())
+                        .firstName(firstName)
+                        .lastName(lastName)
+                        .email(registrationDTO.getEmail())
+                        .phone(registrationDTO.getPhone())
+                        .password(passwordEncoder.encode(registrationDTO.getPassword()))
+                        .role(registrationDTO.getRole())
+                        .isActive(true)
+                        .build();
 
         user = userRepository.save(user);
 
@@ -88,7 +86,7 @@ public class UserService {
                     .fullName(registrationDTO.getFullName())
                     .gender(registrationDTO.getGender())
                     .bloodGroup(registrationDTO.getBloodGroup())
-                    .dob(dob)
+                    .dateOfBirth(dob)
                     .address(registrationDTO.getAddress())
                     .city(registrationDTO.getCity())
                     .state(registrationDTO.getState())

@@ -356,6 +356,7 @@ body {
 }
 
 .btn-view-profile,
+.btn-book,
 .btn-book-appointment {
     flex: 1;
     padding: 0.7rem;
@@ -383,25 +384,157 @@ body {
     color: white;
 }
 
+.btn-book,
 .btn-book-appointment {
     background: var(--secondary);
     color: white;
 }
 
+.btn-book:hover,
 .btn-book-appointment:hover {
     background: #059669;
     transform: translateY(-1px);
 }
 
+.btn-book-disabled,
 .btn-book-appointment.disabled {
     background: var(--light-gray);
     color: var(--gray);
     cursor: not-allowed;
 }
 
+.btn-book-disabled:hover,
 .btn-book-appointment.disabled:hover {
     transform: none;
     background: var(--light-gray);
+}
+
+/* Additional styles for doctor card elements */
+.availability-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.availability-badge.available {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.availability-badge.available i {
+    font-size: 0.5rem;
+}
+
+.availability-badge.unavailable {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.doctor-avatar-wrap {
+    display: flex;
+    justify-content: center;
+}
+
+.doctor-qualification,
+.doctor-hospital {
+    font-size: 0.8rem;
+    color: var(--gray);
+    text-align: center;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.doctor-rating-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.rating-text {
+    font-size: 0.8rem;
+    color: var(--gray);
+    font-weight: 500;
+}
+
+.doctor-stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.stat-pill {
+    padding: 0.4rem 0.75rem;
+    background: var(--light);
+    border: 1px solid var(--light-gray);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--gray);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.stat-pill.fee {
+    color: var(--secondary);
+    background: rgba(16, 185, 129, 0.1);
+    border-color: var(--secondary);
+}
+
+.stat-pill i {
+    font-size: 0.75rem;
+}
+
+/* Location bar */
+.location-bar {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn-location {
+    padding: 1rem 1.5rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition);
+}
+
+.btn-location:hover {
+    background: #4338CA;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15);
+}
+
+.btn-location:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 
 /* TOAST */

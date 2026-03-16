@@ -27,15 +27,47 @@ const urlParams = new URLSearchParams(window.location.search);
                     document.getElementById('docName').textContent = doc.fullName;
                     document.getElementById('docSpecialty').textContent = doc.specialization;
                     document.getElementById('docFee').textContent = `₹${doc.consultationFee} / Consultation`;
-                    // Use initials instead of photo to avoid 404 errors
-                    const name = doc.fullName || 'Doctor';
-                    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                    document.getElementById('docImg').src = `https://ui-avatars.com/api/?name=${initials}&background=4F46E5&color=fff`;
+                    
+                    // Fix profile image URL
+                    if (doc.profilePhoto && doc.profilePhoto.startsWith('http')) {
+                        document.getElementById('docImg').src = doc.profilePhoto;
+                    } else {
+                        const name = doc.fullName || 'Doctor';
+                        const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                        document.getElementById('docImg').src = `https://ui-avatars.com/api/?name=${initials}&background=4F46E5&color=fff`;
+                    }
 
-                    // Populate locations
+                    // Populate locations from doctor profile
                     const locSelect = document.getElementById('locationSelect');
                     if (doc.clinicLocations && doc.clinicLocations.length > 0) {
                         doc.clinicLocations.forEach(loc => {
+                            const opt = document.createElement('option');
+                            opt.value = loc.locationId;
+                            opt.textContent = `${loc.clinicName} - ${loc.city}`;
+                            locSelect.appendChild(opt);
+                        });
+                    } else {
+                        // Fallback: try to fetch clinics separately
+                        await fetchDoctorClinics();
+                    }
+                } else {
+                    showError("Failed to load doctor information.");
+                }
+            } catch (err) {
+                console.error(err);
+                showError("Failed to load doctor information.");
+            }
+        }
+
+        async function fetchDoctorClinics() {
+            try {
+                const response = await fetch(`/api/doctors/${doctorId}/clinics`);
+                if (response.ok) {
+                    const clinics = await response.json();
+                    const locSelect = document.getElementById('locationSelect');
+                    
+                    if (clinics && clinics.length > 0) {
+                        clinics.forEach(loc => {
                             const opt = document.createElement('option');
                             opt.value = loc.locationId;
                             opt.textContent = `${loc.clinicName} - ${loc.city}`;
@@ -46,7 +78,7 @@ const urlParams = new URLSearchParams(window.location.search);
                     }
                 }
             } catch (err) {
-                showError("Failed to load doctor information.");
+                console.error('Error fetching clinics:', err);
             }
         }
 

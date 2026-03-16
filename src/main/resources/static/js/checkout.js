@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const urlParams = new URLSearchParams(window.search);
-    let appointmentId = urlParams.get('appointmentId');
+    const getParams = () => new URLSearchParams(window.location.search);
+    let appointmentId = getParams().get('appointmentId');
 
     // Fallback logic if appointmentId isn't in URL (for testing)
     if (!appointmentId) {

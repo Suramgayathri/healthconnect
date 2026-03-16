@@ -156,8 +156,8 @@ async function cancelAppointment(id) {
     const token = localStorage.getItem('token');
     const reason = document.getElementById('cancel-reason').value;
     try {
-        const response = await fetch(`/api/appointments/${id}/cancel`, {
-            method: 'POST',
+        const response = await fetch(`/api/appointments/${id}`, {
+            method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'

@@ -1,9 +1,8 @@
 package com.digitalclinic.appointmentsystem.controller;
 
+import com.digitalclinic.appointmentsystem.dto.AdminUserDTO;
 import com.digitalclinic.appointmentsystem.dto.DoctorAdminDTO;
-import com.digitalclinic.appointmentsystem.model.Doctor;
 import com.digitalclinic.appointmentsystem.model.Patient;
-import com.digitalclinic.appointmentsystem.model.User;
 import com.digitalclinic.appointmentsystem.service.AdminUserService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -24,7 +23,7 @@ public class AdminController {
     private final AdminUserService adminUserService;
 
     @GetMapping
-    public ResponseEntity<Page<User>> getAllUsers(
+    public ResponseEntity<Page<AdminUserDTO>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         logger.debug("GET /api/admin/users - page: {}, size: {}", page, size);
@@ -47,12 +46,20 @@ public class AdminController {
         return ResponseEntity.ok(adminUserService.getAllDoctors(page, size));
     }
 
+    @GetMapping("/admins")
+    public ResponseEntity<Page<AdminUserDTO>> getAdmins(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.debug("GET /api/admin/users/admins - page: {}, size: {}", page, size);
+        return ResponseEntity.ok(adminUserService.getAllAdmins(page, size));
+    }
+
     // Get single doctor by ID
     @GetMapping("/doctors/{doctorId}")
-    public ResponseEntity<Doctor> getDoctorById(@PathVariable Long doctorId) {
+    public ResponseEntity<DoctorAdminDTO> getDoctorById(@PathVariable Long doctorId) {
         logger.debug("GET /api/admin/users/doctors/{} - fetching doctor details", doctorId);
         try {
-            Doctor doctor = adminUserService.getDoctorById(doctorId);
+            DoctorAdminDTO doctor = adminUserService.getDoctorById(doctorId);
             return ResponseEntity.ok(doctor);
         } catch (RuntimeException e) {
             logger.error("Error fetching doctor {}: {}", doctorId, e.getMessage());
@@ -75,10 +82,10 @@ public class AdminController {
 
     // Get single user by ID
     @GetMapping("/{userId}")
-    public ResponseEntity<User> getUserById(@PathVariable Long userId) {
+    public ResponseEntity<AdminUserDTO> getUserById(@PathVariable Long userId) {
         logger.debug("GET /api/admin/users/{} - fetching user details", userId);
         try {
-            User user = adminUserService.getUserById(userId);
+            AdminUserDTO user = adminUserService.getUserById(userId);
             return ResponseEntity.ok(user);
         } catch (RuntimeException e) {
             logger.error("Error fetching user {}: {}", userId, e.getMessage());

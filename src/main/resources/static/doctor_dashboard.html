@@ -29,9 +29,6 @@
                 <h1 id="welcomeText">Welcome, Dr. Loading...</h1>
                 <p>Here is your overview for today, <span id="currentDate"></span></p>
             </div>
-            <div class="clock-display" id="clock">
-                --:--
-            </div>
         </header>
 
         <!-- Emergency Alerts (Prominent) -->
@@ -107,12 +104,73 @@
                             <i class="fas fa-calendar-plus text-primary"></i>
                             <span>Schedule</span>
                         </button>
+                        <button class="action-btn" onclick="toggleClinicManagement()">
+                            <i class="fas fa-hospital text-secondary"></i>
+                            <span>Clinics</span>
+                        </button>
                         <button class="action-btn" onclick="refreshData()">
                             <i class="fas fa-sync-alt text-secondary"></i>
                             <span>Refresh</span>
                         </button>
                     </div>
                 </div>
+
+                <!-- Clinic Management Section -->
+                <div class="card" id="clinicManagementCard" style="display: none; margin-top: 1rem;">
+                    <h2><i class="fas fa-hospital"></i> My Clinics</h2>
+                    <div id="clinicsList" style="margin-top: 1rem;">
+                        <!-- Clinics will be loaded here -->
+                    </div>
+                    <button class="btn btn-primary" onclick="showAddClinicForm()" style="width: 100%; margin-top: 1rem;">
+                        <i class="fas fa-plus"></i> Add Clinic
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit Clinic Modal -->
+        <div id="clinicModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                <h3 id="clinicModalTitle">Add Clinic</h3>
+                <form id="clinicForm" style="margin-top: 1rem;">
+                    <input type="hidden" id="clinicId">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Clinic Name</label>
+                        <input type="text" id="clinicName" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Address</label>
+                        <textarea id="clinicAddress" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;" rows="2"></textarea>
+                    </div>
+                    <div style="margin-bottom: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">City</label>
+                            <input type="text" id="clinicCity" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">State</label>
+                            <input type="text" id="clinicState" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Pincode</label>
+                            <input type="text" id="clinicPincode" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Phone</label>
+                            <input type="text" id="clinicPhone" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Consultation Fee (₹)</label>
+                        <input type="number" id="clinicFee" step="0.01" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">Save</button>
+                        <button type="button" onclick="closeClinicModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+                    </div>
+                </form>
             </div>
         </div>
     </main>

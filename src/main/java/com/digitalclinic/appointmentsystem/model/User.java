@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 
 @Entity
@@ -38,9 +39,7 @@ public class User {
     @Column(nullable = false, unique = true, length = 20)
     private String phone;
 
-    @Column(name = "password")
-    private String passwordPlain;
-
+    @JsonIgnore
     @Column(name = "password_hash", nullable = false)
     private String password;
 

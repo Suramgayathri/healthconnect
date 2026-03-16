@@ -2,6 +2,7 @@ package com.digitalclinic.appointmentsystem.controller;
 
 import com.digitalclinic.appointmentsystem.dto.AppointmentDTO;
 import com.digitalclinic.appointmentsystem.dto.AppointmentRequestDTO;
+import com.digitalclinic.appointmentsystem.dto.AppointmentUpdateRequestDTO;
 import com.digitalclinic.appointmentsystem.dto.AvailableSlotDTO;
 import com.digitalclinic.appointmentsystem.dto.EmergencyBookingDTO;
 import com.digitalclinic.appointmentsystem.security.UserDetailsImpl;
@@ -103,6 +104,16 @@ public class AppointmentController {
             Authentication auth) {
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         return ResponseEntity.ok(appointmentService.updateAppointmentStatus(id, userDetails.getId(), status));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public ResponseEntity<AppointmentDTO> updateAppointment(
+            @PathVariable Long id,
+            @RequestBody AppointmentUpdateRequestDTO requestDTO,
+            Authentication auth) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        return ResponseEntity.ok(appointmentService.updateAppointment(id, userDetails.getId(), requestDTO));
     }
 
     // SHARED ENDPOINTS

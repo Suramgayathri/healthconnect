@@ -20,6 +20,9 @@ public class AppointmentDTO {
     private Long patientId;
     private String patientName;
     private String patientPhone;
+    private String patientGender;
+    private String patientBloodGroup;
+    private LocalDate patientDateOfBirth;
 
     private Long doctorId;
     private String doctorName;
