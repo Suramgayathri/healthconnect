@@ -207,7 +207,8 @@ function displayAdmins(users, totalPages) {
     const tbody = document.getElementById('adminsTableBody');
     if (!tbody) return;
 
-    const admins = users.filter(u => u.role === 'ADMIN');
+    // Filter for admins only
+    const admins = users.filter(u => u.role === 'ADMIN' || u.role === 'admin');
 
     if (admins.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" class="text-center">No admins found</td></tr>';
