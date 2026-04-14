@@ -162,9 +162,19 @@
                             <input type="text" id="clinicPhone" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
                         </div>
                     </div>
+                    <div style="margin-bottom: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Consultation Fee (₹)</label>
+                            <input type="number" id="clinicFee" step="0.01" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Operating Hours</label>
+                            <input type="text" id="clinicHours" placeholder="e.g. 9 AM - 5 PM" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                        </div>
+                    </div>
                     <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Consultation Fee (₹)</label>
-                        <input type="number" id="clinicFee" step="0.01" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Facilities</label>
+                        <input type="text" id="clinicFacilities" placeholder="e.g. Parking, Pharmacy" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
                     </div>
                     <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                         <button type="submit" class="btn btn-primary" style="flex: 1;">Save</button>

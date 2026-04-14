@@ -4,6 +4,28 @@
  * password strength, field validation, and API submission.
  */
 
+document.addEventListener('DOMContentLoaded', () => {
+    loadSpecializations();
+});
+
+async function loadSpecializations() {
+    try {
+        const res = await fetch('/api/specializations');
+        if (res.ok) {
+            const data = await res.json();
+            const specSelect = document.getElementById('specialization');
+            data.forEach(spec => {
+                const opt = document.createElement('option');
+                opt.value = spec.name;
+                opt.textContent = spec.name;
+                specSelect.appendChild(opt);
+            });
+        }
+    } catch(e) {
+        console.error(e);
+    }
+}
+
 // ── Password toggle ──────────────────────────────────────────────────────────
 function togglePassword(fieldId, iconEl) {
     const input = document.getElementById(fieldId);

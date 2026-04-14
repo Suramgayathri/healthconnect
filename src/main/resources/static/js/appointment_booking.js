@@ -110,6 +110,7 @@ const urlParams = new URLSearchParams(window.location.search);
 
             slotsGrid.innerHTML = '';
             selectedTime = null;
+            let selectedSlotId = null;
             submitBtn.disabled = true;
             loader.style.display = 'block';
 
@@ -128,7 +129,7 @@ const urlParams = new URLSearchParams(window.location.search);
                             btn.className = 'slot-btn';
                             btn.textContent = slot.startTime.substring(0, 5);
 
-                            if (!slot.available) {
+                            if (!slot.available && slot.status !== 'AVAILABLE') {
                                 btn.disabled = true;
                                 btn.style.textDecoration = 'line-through';
                             } else if (slot.emergencySlot) {
@@ -136,7 +137,7 @@ const urlParams = new URLSearchParams(window.location.search);
                                 btn.title = 'Designated Emergency Slot';
                             }
 
-                            btn.onclick = () => selectSlot(btn, slot.startTime);
+                            btn.onclick = () => selectSlot(btn, slot.startTime, slot.id || slot.slotId);
                             slotsGrid.appendChild(btn);
                         });
                     }
@@ -150,10 +151,13 @@ const urlParams = new URLSearchParams(window.location.search);
             }
         }
 
-        function selectSlot(btnElement, time) {
+        let currentSelectedSlotId = null;
+
+        function selectSlot(btnElement, time, slotId) {
             document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
             btnElement.classList.add('selected');
             selectedTime = time;
+            currentSelectedSlotId = slotId;
             document.getElementById('submitBtn').disabled = false;
         }
 
@@ -170,6 +174,7 @@ const urlParams = new URLSearchParams(window.location.search);
             const isEmergency = document.getElementById('isEmergency').checked;
 
             const payload = {
+                slotId: currentSelectedSlotId,
                 doctorId: parseInt(doctorId),
                 locationId: parseInt(document.getElementById('locationSelect').value),
                 appointmentDate: document.getElementById('appointmentDate').value,

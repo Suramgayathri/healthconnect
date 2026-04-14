@@ -220,6 +220,8 @@ function showAddClinicForm() {
     document.getElementById('clinicModalTitle').textContent = 'Add Clinic';
     document.getElementById('clinicForm').reset();
     document.getElementById('clinicId').value = '';
+    document.getElementById('clinicFacilities').value = '';
+    document.getElementById('clinicHours').value = '';
     document.getElementById('clinicModal').style.display = 'flex';
 }
 
@@ -246,6 +248,8 @@ async function editClinic(clinicId) {
         document.getElementById('clinicPincode').value = clinic.pincode;
         document.getElementById('clinicPhone').value = clinic.phone || '';
         document.getElementById('clinicFee').value = clinic.consultationFeeAtThisLocation || '';
+        document.getElementById('clinicFacilities').value = clinic.facilities || '';
+        document.getElementById('clinicHours').value = clinic.operatingHours || '';
         document.getElementById('clinicModal').style.display = 'flex';
     } catch (error) {
         console.error('Error loading clinic:', error);
@@ -290,6 +294,8 @@ document.getElementById('clinicForm').addEventListener('submit', async (e) => {
         state: document.getElementById('clinicState').value,
         pincode: document.getElementById('clinicPincode').value,
         phone: document.getElementById('clinicPhone').value,
+        facilities: document.getElementById('clinicFacilities').value,
+        operatingHours: document.getElementById('clinicHours').value,
         consultationFeeAtThisLocation: document.getElementById('clinicFee').value ? parseFloat(document.getElementById('clinicFee').value) : null
     };
 

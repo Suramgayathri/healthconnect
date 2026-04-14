@@ -1,0 +1,473 @@
+HEALTHCONNECT SYSTEM
+COMPLETE FUNCTIONAL FLOW AND ROLE INTERACTIONS
+
+---
+
+1. SYSTEM OVERVIEW
+
+HealthConnect is a role-based healthcare platform connecting patients, doctors, and administrators. The system supports appointment booking, scheduling, payments, prescriptions, and analytics.
+
+There are three primary roles:
+
+* Patient
+* Doctor
+* Admin
+
+All interactions in the system are built around these roles and their relationships with core entities such as users, doctor locations, schedules, slots, appointments, and payments.
+
+---
+
+2. CORE ENTITIES AND RELATIONSHIPS
+
+Users
+All actors are stored in the users table with role-based classification.
+
+Patients
+Each patient is linked one-to-one with a user.
+
+Doctors
+Each doctor is linked one-to-one with a user and must be approved by admin.
+
+Clinic Locations
+Represents physical clinics or hospitals.
+
+Doctor Locations
+Maps doctors to clinics. A doctor can work at multiple locations.
+
+Doctor Schedules
+Defines weekly availability for a doctor at a specific location.
+
+Appointment Slots
+Represents actual time slots generated from schedules for a specific date.
+
+Appointments
+Represents confirmed bookings between patient and doctor for a slot.
+
+Payments
+Represents transaction details for appointments.
+
+Prescriptions
+Represents diagnosis and medication issued by doctors after consultation.
+
+Notifications
+Represents communication sent to users.
+
+---
+
+3. ROLE BASED FLOW
+
+---
+
+3.1 PATIENT FLOW
+
+Registration and Authentication
+The patient registers by creating a user account with role set to patient.
+A corresponding patient profile is created and linked to the user.
+
+Interaction
+Patient interacts with the authentication system and user entity.
+
+---
+
+Doctor Discovery
+The patient searches for doctors based on specialization or location.
+
+Interaction
+
+* Reads doctors data
+* Reads doctor_locations
+* Reads clinic_locations
+
+Location-based filtering uses patient coordinates and clinic coordinates.
+
+---
+
+Viewing Doctor Availability
+The patient selects a doctor and a clinic location.
+The patient selects a date.
+
+System Action
+
+* Fetch doctor_location_id
+* Fetch doctor schedule for that location and day
+* Generate slots if not already generated
+* Fetch available slots from appointment_slots
+
+Interaction
+Patient interacts with doctor_locations, doctor_schedules, and appointment_slots.
+
+---
+
+Booking Appointment
+The patient selects a slot and confirms booking.
+
+System Action
+
+* Validate slot availability
+* Create appointment
+* Update slot status to booked
+
+Interaction
+
+* Write into appointments
+* Update appointment_slots
+
+---
+
+Payment
+The patient proceeds to payment after booking.
+
+System Action
+
+* Create payment record
+* On success, update payment status
+* Update appointment status to confirmed
+
+Interaction
+
+* Write into payments
+* Update appointments
+
+---
+
+Managing Appointments
+The patient can view, cancel, or reschedule appointments.
+
+System Action
+
+* On cancel, update appointment status
+* Update slot back to available
+
+Interaction
+
+* Update appointments
+* Update appointment_slots
+
+---
+
+Viewing Medical Records
+The patient can view prescriptions, lab results, and past records.
+
+Interaction
+
+* Reads prescriptions
+* Reads medical records
+* Reads lab tests
+
+---
+
+---
+
+3.2 DOCTOR FLOW
+
+---
+
+Registration and Approval
+The doctor registers with role set to doctor.
+The doctor remains inactive until approved by admin.
+
+Interaction
+
+* Write into users
+* Write into doctors
+
+---
+
+Admin Approval Dependency
+Doctor cannot log in until approved.
+
+Interaction
+
+* Admin updates doctor.is_verified
+
+---
+
+Managing Locations
+Doctor selects or adds clinic locations.
+
+Interaction
+
+* Write into doctor_locations
+* Link doctor to clinic_locations
+
+---
+
+Managing Schedule
+Doctor defines weekly availability per location.
+
+System Action
+
+* Store schedule template
+
+Interaction
+
+* Write into doctor_schedules
+
+---
+
+Slot Generation Dependency
+Slots are generated based on schedule and date when patient requests availability.
+
+Interaction
+
+* doctor_schedules used to generate appointment_slots
+
+---
+
+Viewing Appointments
+Doctor views appointments in dashboard or calendar.
+
+Interaction
+
+* Read appointments
+* Join with appointment_slots and patients
+
+---
+
+Managing Appointments
+Doctor updates appointment status.
+
+Possible transitions
+
+* Scheduled to Confirmed
+* Confirmed to In Progress
+* In Progress to Completed
+* Any state to Cancelled
+
+Interaction
+
+* Update appointments
+
+---
+
+Consultation and Diagnosis
+Doctor records patient details, vitals, and diagnosis.
+
+Interaction
+
+* Write into patient_vitals
+* Write into prescriptions
+
+---
+
+Prescription Management
+Doctor adds medications and instructions.
+
+Interaction
+
+* Write into prescriptions
+* Write into prescription_medications
+
+---
+
+Handling Schedule Changes
+Doctor modifies schedule.
+
+System Action
+
+* Identify affected slots
+* Block or remove slots
+* Cancel conflicting appointments
+* Notify patients
+
+Interaction
+
+* Update doctor_schedules
+* Update appointment_slots
+* Update appointments
+* Write into notifications
+
+---
+
+---
+
+3.3 ADMIN FLOW
+
+---
+
+Authentication
+Admin logs in using admin role.
+
+Interaction
+
+* users
+
+---
+
+Doctor Management
+Admin views and manages doctor accounts.
+
+Actions
+
+* Approve doctor
+* Reject doctor
+* Suspend doctor
+
+Interaction
+
+* Update doctors
+
+---
+
+User Management
+Admin manages patient and admin accounts.
+
+Actions
+
+* Activate or deactivate users
+
+Interaction
+
+* Update users
+
+---
+
+System Monitoring
+Admin views system-wide analytics.
+
+Data Sources
+
+* appointments
+* payments
+* users
+
+---
+
+Analytics and Reports
+Admin generates reports for:
+
+* Total appointments
+* Revenue
+* Doctor performance
+* Patient growth
+
+Interaction
+
+* Read appointments
+* Read payments
+
+---
+
+System Configuration
+Admin updates system settings.
+
+Interaction
+
+* system_settings
+
+---
+
+Audit Logging
+Admin actions are recorded.
+
+Interaction
+
+* Write into admin_audit_logs
+
+---
+
+---
+
+4. CROSS ROLE INTERACTIONS
+
+---
+
+Patient and Doctor Interaction
+Occurs through appointments.
+
+* Patient books appointment
+* Doctor accepts and completes consultation
+* Doctor provides prescription
+* Patient views results
+
+Shared Entities
+
+* appointments
+* prescriptions
+* patient_vitals
+
+---
+
+Patient and Admin Interaction
+Indirect.
+
+* Admin manages patient account
+* Admin monitors patient activity
+
+Shared Entities
+
+* users
+* patients
+
+---
+
+Doctor and Admin Interaction
+Direct.
+
+* Admin approves doctor
+* Admin monitors doctor performance
+
+Shared Entities
+
+* doctors
+* appointments
+
+---
+
+---
+
+5. SYSTEM EVENTS AND AUTOMATION
+
+---
+
+Slot Generation
+Triggered when patient requests slots for a specific date.
+
+---
+
+Appointment Booking
+Triggers slot update and notification.
+
+---
+
+Payment Completion
+Triggers appointment confirmation.
+
+---
+
+Appointment Cancellation
+Triggers slot release and notification.
+
+---
+
+Schedule Update
+Triggers slot recalculation and appointment cancellation if needed.
+
+---
+
+Notifications
+Triggered on:
+
+* Booking
+* Cancellation
+* Payment
+* Schedule changes
+
+---
+
+---
+
+6. FINAL FLOW SUMMARY
+
+---
+
+Doctor defines availability using schedules linked to specific locations.
+The system generates slots dynamically for selected dates.
+The patient searches for doctors based on location and specialization.
+The patient selects a slot and books an appointment.
+The system validates and locks the slot.
+The patient completes payment and the appointment is confirmed.
+The doctor views and manages appointments through a dashboard and calendar.
+After consultation, the doctor records diagnosis and generates prescriptions.
+The patient accesses records and appointment history.
+The admin oversees the system, manages users, and monitors analytics.

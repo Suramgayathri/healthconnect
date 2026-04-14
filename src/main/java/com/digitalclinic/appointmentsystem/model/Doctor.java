@@ -13,6 +13,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "doctors")
@@ -110,15 +111,15 @@ public class Doctor {
     private LocalDateTime updatedAt;
 
     // Relationships to be added when entities exist
-    // @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
-    // private List<DoctorLocation> doctorLocations;
+    @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
+    private List<DoctorLocation> doctorLocations;
 
-    // @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
-    // private List<DoctorSchedule> schedules;
+    @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
+    private List<DoctorSchedule> schedules;
 
-    // @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
-    // private List<Appointment> appointments;
+    @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
+    private List<Appointment> appointments;
 
-    // @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
-    // private List<Review> reviews;
+    @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
+    private List<Review> reviews;
 }

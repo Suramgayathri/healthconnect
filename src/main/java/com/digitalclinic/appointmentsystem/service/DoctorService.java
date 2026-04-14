@@ -58,6 +58,9 @@ public class DoctorService {
     private AppointmentRepository appointmentRepository;
 
     @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     public DoctorDashboardDTO getDashboardData(Long userId) {
@@ -126,6 +129,7 @@ public class DoctorService {
 
         Page<Doctor> doctors = doctorRepository.searchDoctors(
                 searchDTO.getSpecialization(),
+                searchDTO.getCity(),
                 searchDTO.getMinExperience(),
                 searchDTO.getMaxFee(),
                 pageable);
@@ -304,6 +308,10 @@ public class DoctorService {
 
     public DoctorScheduleDTO createOrUpdateSchedule(Long userId, DoctorScheduleDTO scheduleDTO) {
         logger.info("Creating or updating schedule for doctor user ID: {}", userId);
+        if (scheduleDTO.getLocationId() == null) {
+            throw new IllegalArgumentException("Location ID is required. Please add a clinic first.");
+        }
+        
         Doctor doctor = doctorRepository.findByUser_Id(userId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
         ClinicLocation location = clinicLocationRepository.findById(scheduleDTO.getLocationId())
@@ -353,7 +361,57 @@ public class DoctorService {
         schedule.setActive(scheduleDTO.isActive());
 
         DoctorSchedule savedSchedule = doctorScheduleRepository.save(schedule);
+
+        // After updating the schedule, find and handle any affected appointments
+        handleAffectedAppointments(doctor.getId(), savedSchedule);
+
         return convertToScheduleDTO(savedSchedule);
+    }
+
+    private void handleAffectedAppointments(Long doctorId, DoctorSchedule schedule) {
+        LocalDate today = LocalDate.now();
+        
+        List<Appointment> allAppointments = appointmentRepository.findByDoctorId(doctorId);
+        
+        List<Appointment> affectedAppointments = allAppointments.stream()
+                .filter(a -> !a.getAppointmentDate().isBefore(today)) // Only upcoming/today
+                .filter(a -> a.getStatus() == Appointment.AppointmentStatus.SCHEDULED || a.getStatus() == Appointment.AppointmentStatus.CONFIRMED)
+                .filter(a -> a.getAppointmentDate().getDayOfWeek().name().equals(schedule.getDayOfWeek().name()))
+                .filter(a -> isTimeOutOfBounds(a.getAppointmentTime(), schedule))
+                .collect(Collectors.toList());
+
+        for (Appointment app : affectedAppointments) {
+            app.setStatus(Appointment.AppointmentStatus.CANCELLED);
+            appointmentRepository.save(app);
+
+            String message = String.format("Your appointment on %s at %s with Dr. %s has been cancelled due to a schedule change. Please book a new appointment.",
+                    app.getAppointmentDate(),
+                    app.getAppointmentTime(),
+                    app.getDoctor().getFullName());
+            
+            notificationService.sendNotification(
+                    app.getPatient().getUser().getId(),
+                    "Appointment Cancelled",
+                    message,
+                    "CANCELLATION"
+            );
+        }
+    }
+
+    private boolean isTimeOutOfBounds(LocalTime appointmentTime, DoctorSchedule schedule) {
+        if (!schedule.isActive()) return true;
+        
+        if (appointmentTime.isBefore(schedule.getStartTime()) || !appointmentTime.isBefore(schedule.getEndTime())) {
+            return true;
+        }
+
+        if (schedule.getBreakStartTime() != null && schedule.getBreakEndTime() != null) {
+            if (!appointmentTime.isBefore(schedule.getBreakStartTime()) && appointmentTime.isBefore(schedule.getBreakEndTime())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void deleteSchedule(Long userId, Long scheduleId) {

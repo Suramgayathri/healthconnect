@@ -7,8 +7,7 @@
     <title>Doctor Schedule - HealthConnect</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- FullCalendar CSS and JS -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <!-- Removed FullCalendar -->
     <link rel="stylesheet" href="css/doctor_schedule.css">
 </head>
 
@@ -75,6 +74,14 @@
                     </div>
                 </div>
 
+                <div class="card mt-4" id="schedule-rules-card">
+                    <h3><i class="fas fa-clock"></i> My Working Hours</h3>
+                    <div id="schedule-rules-list" style="margin-top: 1rem; max-height: 300px; overflow-y: auto;">
+                        <!-- Injected dynamically -->
+                        <p class="text-muted text-sm">Loading your schedule...</p>
+                    </div>
+                </div>
+
                 <div class="card mt-4" id="appointment-details-card" style="display: none;">
                     <h3>Appointment Details</h3>
                     <div id="details-content">
@@ -86,14 +93,29 @@
                 </div>
             </aside>
 
-            <!-- Main Calendar View -->
+            <!-- Main Grid View -->
             <div class="main-content">
-                <div class="card calendar-card">
+                <div class="card grid-card">
+                    <div class="grid-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #E5E7EB; padding-bottom: 1rem;">
+                        <button class="btn btn-secondary" id="prevDayBtn"><i class="fas fa-chevron-left"></i> Prev</button>
+                        <h2 id="currentGridDate" style="margin: 0; font-size: 1.5rem; font-weight: 700;">Loading...</h2>
+                        <button class="btn btn-secondary" id="nextDayBtn">Next <i class="fas fa-chevron-right"></i></button>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem; text-align: center;">
+                        <button class="btn btn-primary" onclick="openScheduleModalForDate(currentDisplayDate)">
+                            <i class="fas fa-cog"></i> Configure Open Slots for <span id="addSlotBtnDate">Selected Date</span>
+                        </button>
+                    </div>
+
                     <div id="calendar-loader" class="loader">
                         <div class="spinner"></div>
-                        <p>Loading Calendar...</p>
+                        <p>Loading Availability Matrix...</p>
                     </div>
-                    <div id="calendar"></div>
+                    
+                    <div class="slots-grid" id="slotsGrid">
+                        <!-- Custom JS Grid injected here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -118,8 +140,60 @@
         </div>
     </div>
 
+    <!-- Modal for Schedule Editing -->
+    <div id="scheduleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Schedule Rules</h2>
+                <span class="close-schedule-btn">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleEditForm">
+                    <input type="hidden" id="editScheduleId">
+                    <input type="hidden" id="editDayOfWeek">
+                    
+                    <div class="form-group mb-3">
+                        <label>Clinic Location</label>
+                        <select id="editLocationId" class="form-control" required></select>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label>Start Time</label>
+                        <input type="time" id="editStartTime" class="form-control" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>End Time</label>
+                        <input type="time" id="editEndTime" class="form-control" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>Break Start Time (Optional)</label>
+                        <input type="time" id="editBreakStart" class="form-control">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>Break End Time (Optional)</label>
+                        <input type="time" id="editBreakEnd" class="form-control">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>Slot Duration (minutes)</label>
+                        <input type="number" id="editSlotDuration" class="form-control" required min="5" value="30">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="custom-checkbox">
+                            <input type="checkbox" id="editIsActive" checked>
+                            <span class="checkmark"></span> Active Schedule
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-schedule-btn">Cancel</button>
+                <button class="btn btn-primary" id="saveScheduleBtn">Save Schedule</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/doctor_schedule.js"></script>
-<script src="/js/notification_handler.js"></script>
+    <script src="/js/notification_handler.js"></script>
 </body>
 
 </html>

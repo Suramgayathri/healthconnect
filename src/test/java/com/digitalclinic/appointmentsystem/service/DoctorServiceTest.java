@@ -3,6 +3,7 @@ package com.digitalclinic.appointmentsystem.service;
 import com.digitalclinic.appointmentsystem.dto.DoctorProfileDTO;
 import com.digitalclinic.appointmentsystem.dto.DoctorSearchDTO;
 import com.digitalclinic.appointmentsystem.model.Doctor;
+import com.digitalclinic.appointmentsystem.repository.DoctorLocationRepository;
 import com.digitalclinic.appointmentsystem.repository.DoctorRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,9 @@ public class DoctorServiceTest {
 
     @Mock
     private DoctorRepository doctorRepository;
+
+    @Mock
+    private DoctorLocationRepository doctorLocationRepository;
 
     @Mock
     private ModelMapper modelMapper;
@@ -62,8 +66,10 @@ public class DoctorServiceTest {
 
         Page<Doctor> mockedPage = new PageImpl<>(Arrays.asList(doc1));
 
-        when(doctorRepository.searchDoctors(any(), any(), any(), any(PageRequest.class)))
+        when(doctorRepository.searchDoctors(any(), any(), any(), any(), any(PageRequest.class)))
                 .thenReturn(mockedPage);
+        when(doctorLocationRepository.findByDoctorId(anyLong()))
+                .thenReturn(Arrays.asList());
         when(modelMapper.map(any(Doctor.class), eq(DoctorProfileDTO.class)))
                 .thenReturn(doc1DTO);
 
@@ -74,7 +80,7 @@ public class DoctorServiceTest {
         assertNotNull(result);
         assertEquals(1, result.getSize());
         assertEquals("Cardiologist", result.getContent().get(0).getSpecialization());
-        verify(doctorRepository, times(1)).searchDoctors(any(), any(), any(), any());
+        verify(doctorRepository, times(1)).searchDoctors(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -90,6 +96,7 @@ public class DoctorServiceTest {
         dto.setFullName("Dr. Smith");
 
         when(doctorRepository.findById(doctorId)).thenReturn(Optional.of(doc));
+        when(doctorLocationRepository.findByDoctorId(doctorId)).thenReturn(Arrays.asList());
         when(modelMapper.map(doc, DoctorProfileDTO.class)).thenReturn(dto);
 
         // Act
@@ -110,7 +117,7 @@ public class DoctorServiceTest {
         Exception exception = assertThrows(RuntimeException.class, () -> {
             doctorService.getDoctorProfile(doctorId);
         });
-        assertEquals("Doctor not found", exception.getMessage());
+        assertEquals("Doctor not found with ID: 99", exception.getMessage());
     }
 
     @Test
@@ -127,6 +134,7 @@ public class DoctorServiceTest {
 
         when(doctorRepository.findByUser_Id(userId)).thenReturn(Optional.of(existingDoc));
         when(doctorRepository.save(any(Doctor.class))).thenReturn(existingDoc);
+        when(doctorLocationRepository.findByDoctorId(anyLong())).thenReturn(Arrays.asList());
         when(modelMapper.map(any(Doctor.class), eq(DoctorProfileDTO.class))).thenReturn(updateDTO);
 
         // Act

@@ -36,9 +36,7 @@ async function loadDoctors() {
     `;
     
     const endpoints = [
-        '/api/doctors/search',
-        '/api/doctors/search?page=0&size=50',
-        '/api/doctors'
+        '/api/doctors/search?page=0&size=50'
     ];
     
     let doctors = null;
@@ -362,9 +360,31 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
+// ===== LOAD SPECIALIZATIONS =====
+async function loadSpecializations() {
+    try {
+        const res = await fetch(`${API_BASE}/api/specializations`, { headers: authHeader() });
+        if (res.ok) {
+            const data = await res.json();
+            const specSelect = document.getElementById('specializationFilter');
+            if (specSelect) {
+                data.forEach(spec => {
+                    const opt = document.createElement('option');
+                    opt.value = spec.name;
+                    opt.textContent = spec.name;
+                    specSelect.appendChild(opt);
+                });
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load specializations', e);
+    }
+}
+
 // ===== INITIALIZE =====
 document.addEventListener('DOMContentLoaded', () => {
     if (!checkAuth()) return;
+    loadSpecializations();
     loadDoctors();
     
     document.getElementById('searchInput')?.addEventListener('input', searchDoctors);

@@ -46,6 +46,12 @@ public class AppointmentService {
     private LabTestRepository labTestRepository;
 
     @Autowired
+    private AppointmentSlotRepository slotRepository;
+
+    @Autowired
+    private AppointmentSlotService appointmentSlotService;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     public AppointmentDTO bookAppointment(Long patientUserId, AppointmentRequestDTO requestDTO) {
@@ -62,12 +68,26 @@ public class AppointmentService {
         ClinicLocation location = locationRepository.findById(requestDTO.getLocationId())
                 .orElseThrow(() -> new RuntimeException("Clinic Location not found"));
 
+        AppointmentSlot slot = null;
         if (!requestDTO.isEmergency()) {
-            boolean isSlotTaken = !checkSlotAvailability(doctor.getId(), requestDTO.getAppointmentDate(),
-                    requestDTO.getAppointmentTime());
-
-            if (isSlotTaken) {
-                throw new RuntimeException("This time slot is already booked. Please select another time.");
+            if (requestDTO.getSlotId() != null) {
+                slot = slotRepository.findById(requestDTO.getSlotId())
+                        .orElseThrow(() -> new RuntimeException("Appointment slot not found"));
+                        
+                if (slot.getStatus() != AppointmentSlot.SlotStatus.AVAILABLE) {
+                    throw new RuntimeException("This time slot is already booked. Please select another time.");
+                }
+                
+                // Override request dates with slot data for safety
+                requestDTO.setAppointmentDate(slot.getSlotDate());
+                requestDTO.setAppointmentTime(slot.getStartTime());
+            } else {
+                boolean isSlotTaken = !checkSlotAvailability(doctor.getId(), requestDTO.getAppointmentDate(),
+                        requestDTO.getAppointmentTime());
+    
+                if (isSlotTaken) {
+                    throw new RuntimeException("This time slot is already booked. Please select another time.");
+                }
             }
         }
 
@@ -101,6 +121,12 @@ public class AppointmentService {
         }
 
         Appointment savedAppointment = appointmentRepository.save(appointment);
+        
+        if (slot != null) {
+            slot.setStatus(AppointmentSlot.SlotStatus.BOOKED);
+            slotRepository.save(slot);
+        }
+        
         return convertToDTO(savedAppointment);
     }
 
@@ -199,30 +225,27 @@ public class AppointmentService {
         doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
 
-        List<Appointment> existingAppointments = appointmentRepository.findByDoctorIdAndAppointmentDate(
-                doctorId, date);
+        // Dynamically fetch and/or regenerate slots accurately mapped to true schedules
+        List<AppointmentSlot> dailySlots = appointmentSlotService.generateSlotsForDate(doctorId, locationId, date);
 
-        List<LocalTime> bookedTimes = existingAppointments.stream()
-                .filter(app -> app.getStatus() != Appointment.AppointmentStatus.CANCELLED)
-                .map(Appointment::getAppointmentTime)
-                .collect(Collectors.toList());
-
-        List<AvailableSlotDTO> slots = new java.util.ArrayList<>();
-        LocalTime time = LocalTime.of(9, 0);
-        LocalTime endTime = LocalTime.of(17, 0);
-
-        while (time.isBefore(endTime)) {
-            boolean isBooked = bookedTimes.contains(time);
-            slots.add(AvailableSlotDTO.builder()
-                    .date(date)
-                    .startTime(time)
-                    .endTime(time.plusMinutes(30))
-                    .isAvailable(!isBooked)
-                    .isEmergencySlot(time.getMinute() == 30) // example logical separation
+        List<AvailableSlotDTO> dtos = new java.util.ArrayList<>();
+        
+        for (AppointmentSlot slot : dailySlots) {
+            boolean isAvail = slot.getStatus() == AppointmentSlot.SlotStatus.AVAILABLE;
+            
+            // Mark half past the hour as emergency slot logic or whatever preference
+            boolean emergency = slot.getStartTime().getMinute() == 30;
+            
+            dtos.add(AvailableSlotDTO.builder()
+                    .date(slot.getSlotDate())
+                    .startTime(slot.getStartTime())
+                    .endTime(slot.getEndTime())
+                    .isAvailable(isAvail)
+                    .isEmergencySlot(emergency)
                     .build());
-            time = time.plusMinutes(30);
         }
-        return slots;
+
+        return dtos;
     }
 
     public AppointmentDTO rescheduleAppointment(Long appointmentId, LocalDate newDate, LocalTime newTime,
@@ -487,6 +510,19 @@ public class AppointmentService {
 
         appointment.setStatus(Appointment.AppointmentStatus.CANCELLED);
         Appointment savedAppointment = appointmentRepository.save(appointment);
+        
+        // Find and free the slot
+        List<AppointmentSlot> slots = slotRepository.findByDoctorIdAndSlotDateOrderByStartTime(
+                savedAppointment.getDoctor().getId(), savedAppointment.getAppointmentDate());
+                
+        slots.stream()
+            .filter(slot -> slot.getStartTime().equals(savedAppointment.getAppointmentTime()))
+            .findFirst()
+            .ifPresent(slot -> {
+                slot.setStatus(AppointmentSlot.SlotStatus.AVAILABLE);
+                slotRepository.save(slot);
+            });
+            
         return convertToDTO(savedAppointment);
     }
 

@@ -27,13 +27,15 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     List<Doctor> findAllAvailableAndVerified();
 
     // Advanced search
-    @Query("SELECT d FROM Doctor d WHERE " +
+    @Query("SELECT DISTINCT d FROM Doctor d LEFT JOIN d.doctorLocations dl WHERE " +
             "(:specialization IS NULL OR d.specialization = :specialization) AND " +
+            "(:city IS NULL OR dl.location.city = :city) AND " +
             "(:minExperience IS NULL OR d.experienceYears >= :minExperience) AND " +
             "(:maxFee IS NULL OR d.consultationFee <= :maxFee) AND " +
             "d.isAvailable = true AND d.isVerified = true")
     Page<Doctor> searchDoctors(
             @Param("specialization") String specialization,
+            @Param("city") String city,
             @Param("minExperience") Integer minExperience,
             @Param("maxFee") BigDecimal maxFee,
             Pageable pageable);

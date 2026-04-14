@@ -13,6 +13,7 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AppointmentRequestDTO {
+    private Long slotId;
     private Long doctorId;
     private Long locationId;
     private LocalDate appointmentDate;
