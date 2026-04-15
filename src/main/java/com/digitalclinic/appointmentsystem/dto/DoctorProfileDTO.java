@@ -13,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class DoctorProfileDTO {
     private Long doctorId;
+    private String publicId;
     private String fullName;
     private String email;
     private String phone;

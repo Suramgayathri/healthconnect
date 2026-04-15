@@ -13,9 +13,11 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AvailableSlotDTO {
+    private Long slotId;
     private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;
+    private String status;         // "AVAILABLE", "BOOKED", "BREAK", "BLOCKED"
     private boolean isEmergencySlot;
-    private boolean isAvailable;
+    private boolean isAvailable;   // backward compat: true only when status=AVAILABLE
 }

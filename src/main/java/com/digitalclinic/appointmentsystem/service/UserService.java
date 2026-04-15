@@ -124,6 +124,13 @@ public class UserService {
         response.put("email", user.getEmail());
         response.put("role", user.getRole().name());
 
+        // Include doctor's public UUID for DOCTOR role users
+        if (user.getRole() == Role.DOCTOR) {
+            doctorRepository.findByUser_Id(user.getId()).ifPresent(doctor -> {
+                response.put("doctorPublicId", doctor.getPublicId());
+            });
+        }
+
         return response;
     }
 }

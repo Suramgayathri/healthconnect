@@ -49,6 +49,9 @@ document.getElementById('loginForm').addEventListener('submit', async function (
             localStorage.setItem('userRole',  data.role);
             localStorage.setItem('userId',    data.id);
             localStorage.setItem('userEmail', data.email);
+            if (data.doctorPublicId) {
+                localStorage.setItem('doctorPublicId', data.doctorPublicId);
+            }
 
             // Route to the correct dashboard based on role
             if (data.role === 'PATIENT') {

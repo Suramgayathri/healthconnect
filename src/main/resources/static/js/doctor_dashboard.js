@@ -7,22 +7,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('logoutBtn').addEventListener('click', () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('doctorPublicId');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userEmail');
         window.location.href = 'login.html';
     });
-
-    // updateClock();
-    // setInterval(updateClock, 1000);
 
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString(undefined, options);
 
     fetchDashboardData(token);
 });
-
-// function updateClock() {
-//     const now = new Date();
-//     document.getElementById('clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-// }
 
 async function fetchDashboardData(token) {
     try {
@@ -36,7 +32,6 @@ async function fetchDashboardData(token) {
 
         const dashboardData = await response.json();
         
-        // Update generic welcome text (can be improved later with doctor name)
         document.getElementById('welcomeText').textContent = "Welcome back, Doctor!";
 
         processDashboard(dashboardData);
@@ -126,7 +121,6 @@ function renderTimeline(appointments) {
 
 function formatTime(timeStr) {
     if (!timeStr) return '--:--';
-    // Handle HH:mm:ss to HH:mm AM/PM
     const parts = timeStr.split(':');
     if (parts.length >= 2) {
         let hrs = parseInt(parts[0], 10);
@@ -138,187 +132,3 @@ function formatTime(timeStr) {
     }
     return timeStr;
 }
-
-function refreshData() {
-    const token = localStorage.getItem('token');
-    document.getElementById('loader').classList.remove('hidden');
-    document.getElementById('queueList').innerHTML = '';
-    fetchDashboardData(token);
-}
-
-// Clinic Management Functions
-let clinicsVisible = false;
-
-function toggleClinicManagement() {
-    const card = document.getElementById('clinicManagementCard');
-    clinicsVisible = !clinicsVisible;
-    
-    if (clinicsVisible) {
-        card.style.display = 'block';
-        loadClinics();
-    } else {
-        card.style.display = 'none';
-    }
-}
-
-async function loadClinics() {
-    const token = localStorage.getItem('token');
-    try {
-        const response = await fetch('/api/doctors/me/clinics', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to load clinics');
-        }
-
-        const clinics = await response.json();
-        renderClinics(clinics);
-    } catch (error) {
-        console.error('Error loading clinics:', error);
-        document.getElementById('clinicsList').innerHTML = '<p style="color: var(--danger);">Failed to load clinics</p>';
-    }
-}
-
-function renderClinics(clinics) {
-    const container = document.getElementById('clinicsList');
-    
-    if (clinics.length === 0) {
-        container.innerHTML = '<p style="color: #6B7280; text-align: center;">No clinics added yet</p>';
-        return;
-    }
-
-    let html = '';
-    clinics.forEach(clinic => {
-        html += `
-            <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 1rem; margin-bottom: 0.5rem;">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 0.5rem 0; color: var(--dark);">${clinic.clinicName}</h4>
-                        <p style="margin: 0; font-size: 0.875rem; color: #6B7280;">${clinic.address}</p>
-                        <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: #6B7280;">${clinic.city}, ${clinic.state} - ${clinic.pincode}</p>
-                        ${clinic.phone ? `<p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: #6B7280;"><i class="fas fa-phone"></i> ${clinic.phone}</p>` : ''}
-                        ${clinic.consultationFeeAtThisLocation ? `<p style="margin: 0.5rem 0 0 0; font-weight: 600; color: var(--primary);">Fee: ₹${clinic.consultationFeeAtThisLocation}</p>` : ''}
-                    </div>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button onclick="editClinic(${clinic.locationId})" style="padding: 0.5rem; border: none; background: var(--primary-light); color: var(--primary); border-radius: 6px; cursor: pointer;" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="deleteClinic(${clinic.locationId})" style="padding: 0.5rem; border: none; background: var(--danger-light); color: var(--danger); border-radius: 6px; cursor: pointer;" title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-
-    container.innerHTML = html;
-}
-
-function showAddClinicForm() {
-    document.getElementById('clinicModalTitle').textContent = 'Add Clinic';
-    document.getElementById('clinicForm').reset();
-    document.getElementById('clinicId').value = '';
-    document.getElementById('clinicFacilities').value = '';
-    document.getElementById('clinicHours').value = '';
-    document.getElementById('clinicModal').style.display = 'flex';
-}
-
-async function editClinic(clinicId) {
-    const token = localStorage.getItem('token');
-    try {
-        const response = await fetch('/api/doctors/me/clinics', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!response.ok) throw new Error('Failed to load clinic');
-
-        const clinics = await response.json();
-        const clinic = clinics.find(c => c.locationId === clinicId);
-
-        if (!clinic) throw new Error('Clinic not found');
-
-        document.getElementById('clinicModalTitle').textContent = 'Edit Clinic';
-        document.getElementById('clinicId').value = clinic.locationId;
-        document.getElementById('clinicName').value = clinic.clinicName;
-        document.getElementById('clinicAddress').value = clinic.address;
-        document.getElementById('clinicCity').value = clinic.city;
-        document.getElementById('clinicState').value = clinic.state;
-        document.getElementById('clinicPincode').value = clinic.pincode;
-        document.getElementById('clinicPhone').value = clinic.phone || '';
-        document.getElementById('clinicFee').value = clinic.consultationFeeAtThisLocation || '';
-        document.getElementById('clinicFacilities').value = clinic.facilities || '';
-        document.getElementById('clinicHours').value = clinic.operatingHours || '';
-        document.getElementById('clinicModal').style.display = 'flex';
-    } catch (error) {
-        console.error('Error loading clinic:', error);
-        alert('Failed to load clinic details');
-    }
-}
-
-async function deleteClinic(clinicId) {
-    if (!confirm('Are you sure you want to remove this clinic?')) return;
-
-    const token = localStorage.getItem('token');
-    try {
-        const response = await fetch(`/api/doctors/clinics/${clinicId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!response.ok) throw new Error('Failed to delete clinic');
-
-        loadClinics();
-    } catch (error) {
-        console.error('Error deleting clinic:', error);
-        alert('Failed to delete clinic');
-    }
-}
-
-function closeClinicModal() {
-    document.getElementById('clinicModal').style.display = 'none';
-}
-
-document.getElementById('clinicForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const token = localStorage.getItem('token');
-    const clinicId = document.getElementById('clinicId').value;
-    const isEdit = clinicId !== '';
-
-    const clinicData = {
-        clinicName: document.getElementById('clinicName').value,
-        address: document.getElementById('clinicAddress').value,
-        city: document.getElementById('clinicCity').value,
-        state: document.getElementById('clinicState').value,
-        pincode: document.getElementById('clinicPincode').value,
-        phone: document.getElementById('clinicPhone').value,
-        facilities: document.getElementById('clinicFacilities').value,
-        operatingHours: document.getElementById('clinicHours').value,
-        consultationFeeAtThisLocation: document.getElementById('clinicFee').value ? parseFloat(document.getElementById('clinicFee').value) : null
-    };
-
-    try {
-        const url = isEdit ? `/api/doctors/clinics/${clinicId}` : '/api/doctors/clinics';
-        const method = isEdit ? 'PUT' : 'POST';
-
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(clinicData)
-        });
-
-        if (!response.ok) throw new Error('Failed to save clinic');
-
-        closeClinicModal();
-        loadClinics();
-    } catch (error) {
-        console.error('Error saving clinic:', error);
-        alert('Failed to save clinic');
-    }
-});
-

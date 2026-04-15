@@ -22,4 +22,5 @@ public class AppointmentRequestDTO {
     private String reasonForVisit;
     private boolean isEmergency;
     private String urgencyLevel; // LOW, MEDIUM, HIGH, CRITICAL
+    private String paymentStatus;
 }

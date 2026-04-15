@@ -95,9 +95,13 @@ const getToken = () => localStorage.getItem('token');
                             </div>
                             <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                 <span class="status-badge ${statusClass}">${app.status}</span>
+                                ${app.paymentStatus === 'PAID' ? '<span class="status-badge" style="background:#d1fae5; color:#065f46"><i class="fas fa-check-circle"></i> Paid</span>' : '<span class="status-badge" style="background:#fef3c7; color:#b45309"><i class="fas fa-clock"></i> PENDING PAYMENT</span>'}
                                 ${app.isEmergency ? '<span class="status-badge status-emergency"><i class="fas fa-ambulance"></i> EMERGENCY</span>' : ''}
                                 ${app.consultationType === 'VIDEO' ? '<span class="status-badge" style="background:#E0E7FF; color:#4F46E5"><i class="fas fa-video"></i> Video</span>' : ''}
                                 ${app.consultationType === 'PHONE' ? '<span class="status-badge" style="background:#F3E8FF; color:#9333EA"><i class="fas fa-phone"></i> Phone</span>' : ''}
+                            </div>
+                            <div style="margin-top: 0.4rem; font-size: 0.85rem; font-weight: 500;">
+                                Fee: <span style="color:var(--primary)">₹${app.consultationFee || 0}</span>
                             </div>
                         </div>
                         

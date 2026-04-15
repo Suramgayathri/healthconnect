@@ -140,7 +140,14 @@ public class DoctorController {
 
     @GetMapping("/me/clinics")
     @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<List<ClinicLocationDTO>> getMyClinics(Authentication auth) {
+    public ResponseEntity<List<ClinicSummaryDTO>> getMyClinics(Authentication auth) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        return ResponseEntity.ok(doctorService.getDoctorClinicSummaries(userDetails.getId()));
+    }
+
+    @GetMapping("/me/clinics/details")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public ResponseEntity<List<ClinicLocationDTO>> getMyClinicsDetailed(Authentication auth) {
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         return ResponseEntity.ok(doctorService.getDoctorClinics(userDetails.getId()));
     }

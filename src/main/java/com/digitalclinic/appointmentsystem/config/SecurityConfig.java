@@ -77,7 +77,7 @@ public class SecurityConfig {
                                 "/prescription_view.html", "/doctor_patients.html", "/doctor_patient_history.html",
                                 "/checkout.html", "/admin_dashboard.html", "/admin_users.html",
                                 "/admin_reports.html", "/admin_settings.html", "/doctor_profile.html",
-                                "/doctor_schedule.html", "/doctor_search.html", "/profile.html").permitAll()
+                                "/doctor_schedule.html", "/doctor_search.html", "/profile.html", "/doctor_view.html").permitAll()
                         // Static resources
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/webjars/**").permitAll()
                         .requestMatchers("/*.css", "/*.js", "/*.png", "/*.jpg", "/*.jpeg", "/*.gif", "/*.svg", "/*.ico").permitAll()

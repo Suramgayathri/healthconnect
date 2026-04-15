@@ -52,6 +52,9 @@ public class AppointmentService {
     private AppointmentSlotService appointmentSlotService;
 
     @Autowired
+    private DoctorScheduleRepository scheduleRepository;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     public AppointmentDTO bookAppointment(Long patientUserId, AppointmentRequestDTO requestDTO) {
@@ -108,6 +111,9 @@ public class AppointmentService {
             if (requestDTO.getUrgencyLevel() != null) {
                 appointment
                         .setUrgencyLevel(Appointment.UrgencyLevel.valueOf(requestDTO.getUrgencyLevel().toUpperCase()));
+            }
+            if (requestDTO.getPaymentStatus() != null) {
+                appointment.setPaymentStatus(Appointment.PaymentStatus.valueOf(requestDTO.getPaymentStatus().toUpperCase()));
             }
         } catch (IllegalArgumentException e) {
             logger.warn("Invalid enum value provided during booking");
@@ -195,6 +201,9 @@ public class AppointmentService {
             } else {
                 appointment.setUrgencyLevel(Appointment.UrgencyLevel.CRITICAL);
             }
+            if (requestDTO.getPaymentStatus() != null) {
+                appointment.setPaymentStatus(Appointment.PaymentStatus.valueOf(requestDTO.getPaymentStatus().toUpperCase()));
+            }
         } catch (IllegalArgumentException e) {
             logger.warn("Invalid enum value provided during emergency booking");
         }
@@ -222,27 +231,77 @@ public class AppointmentService {
     }
 
     public List<AvailableSlotDTO> getAvailableSlots(Long doctorId, Long locationId, LocalDate date) {
+        // Validate doctor exists
         doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
 
-        // Dynamically fetch and/or regenerate slots accurately mapped to true schedules
-        List<AppointmentSlot> dailySlots = appointmentSlotService.generateSlotsForDate(doctorId, locationId, date);
+        // Find the schedule for this doctor/location/day-of-week
+        String dayOfWeek = date.getDayOfWeek().name();
+        DoctorSchedule schedule = null;
 
+        // Use repository directly to avoid issues with lazy-loaded collections
+        List<DoctorSchedule> schedules = scheduleRepository.findByDoctorId(doctorId);
+
+        for (DoctorSchedule s : schedules) {
+            if (s.getLocation().getId().equals(locationId)
+                    && s.getDayOfWeek().name().equals(dayOfWeek)
+                    && s.isActive()) {
+                schedule = s;
+                break;
+            }
+        }
+
+        // If no active schedule for this day, return empty
+        if (schedule == null) {
+            return java.util.Collections.emptyList();
+        }
+
+        // Fetch existing appointments for this doctor on this date
+        List<Appointment> dayAppointments = appointmentRepository
+                .findByDoctorIdAndAppointmentDateOrderByAppointmentTimeAsc(doctorId, date);
+
+        // Compute all time slots from start to end using slot duration
         List<AvailableSlotDTO> dtos = new java.util.ArrayList<>();
-        
-        for (AppointmentSlot slot : dailySlots) {
-            boolean isAvail = slot.getStatus() == AppointmentSlot.SlotStatus.AVAILABLE;
-            
-            // Mark half past the hour as emergency slot logic or whatever preference
-            boolean emergency = slot.getStartTime().getMinute() == 30;
-            
+        LocalTime current = schedule.getStartTime();
+        LocalTime end = schedule.getEndTime();
+        int duration = schedule.getSlotDuration();
+
+        while (current.plusMinutes(duration).isBefore(end) || current.plusMinutes(duration).equals(end)) {
+            LocalTime slotEnd = current.plusMinutes(duration);
+
+            // Check if this slot falls within break time
+            boolean isBreak = false;
+            if (schedule.getBreakStartTime() != null && schedule.getBreakEndTime() != null) {
+                if (!current.isBefore(schedule.getBreakStartTime()) && current.isBefore(schedule.getBreakEndTime())) {
+                    isBreak = true;
+                }
+            }
+
+            // Check if there's a booked appointment at this time
+            final LocalTime slotStart = current;
+            boolean isBooked = dayAppointments.stream()
+                    .filter(a -> a.getStatus() != Appointment.AppointmentStatus.CANCELLED)
+                    .anyMatch(a -> a.getAppointmentTime().equals(slotStart));
+
+            String status;
+            if (isBreak) {
+                status = "BREAK";
+            } else if (isBooked) {
+                status = "BOOKED";
+            } else {
+                status = "AVAILABLE";
+            }
+
             dtos.add(AvailableSlotDTO.builder()
-                    .date(slot.getSlotDate())
-                    .startTime(slot.getStartTime())
-                    .endTime(slot.getEndTime())
-                    .isAvailable(isAvail)
-                    .isEmergencySlot(emergency)
+                    .date(date)
+                    .startTime(current)
+                    .endTime(slotEnd)
+                    .status(status)
+                    .isAvailable("AVAILABLE".equals(status))
+                    .isEmergencySlot(false)
                     .build());
+
+            current = current.plusMinutes(duration);
         }
 
         return dtos;

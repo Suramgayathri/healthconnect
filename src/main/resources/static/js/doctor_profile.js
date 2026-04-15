@@ -1,68 +1,85 @@
-document.addEventListener('DOMContentLoaded', async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const docId = urlParams.get('id');
+document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
 
-            if (!docId) {
-                alert("Doctor ID missing");
-                window.location.href = "doctor_search.html";
-                return;
-            }
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    document.getElementById('logoutBtnMain').addEventListener('click', logout);
 
-            try {
-                const response = await fetch(`/api/doctors/${docId}`);
-                if (response.ok) {
-                    const doc = await response.json();
-                    document.getElementById('docName').innerText = doc.fullName;
-                    document.getElementById('docSpecialty').innerText = doc.specialization;
-                    document.getElementById('docRating').innerText = doc.averageRating || 'New';
-                    document.getElementById('docExp').innerText = doc.experienceYears || '0';
-                    document.getElementById('docLang').innerText = doc.languagesSpoken || 'English';
-                    document.getElementById('docAbout').innerText = doc.about || 'No detailed bio available for this doctor yet.';
-                    document.getElementById('docFee').innerText = doc.consultationFee || '50.00';
-                    document.getElementById('docImage').src = doc.profilePhoto || 'https://ui-avatars.com/api/?name=' + doc.fullName + '&background=random';
-                    
-                    const clinicsDiv = document.getElementById('clinicsContainer');
-                    if (doc.clinicLocations && doc.clinicLocations.length > 0) {
-                        clinicsDiv.innerHTML = doc.clinicLocations.map(loc => `
-                            <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1.25rem; border-bottom: 1px solid #E5E7EB; padding-bottom: 1rem;">
-                                <i class="fas fa-map-marker-alt" style="color: var(--danger); font-size: 1.5rem; margin-top: 5px;"></i>
-                                <div>
-                                    <h4 style="font-size: 1.1rem; margin-bottom: 0.25rem;">${loc.clinicName}</h4>
-                                    <p style="color: #6B7280; margin-bottom: 0.25rem; font-size: 0.9rem;">${loc.address}, ${loc.city}, ${loc.state} ${loc.pincode}</p>
-                                    ${loc.consultationFeeAtThisLocation ? `<p style="font-weight: 600; color: var(--primary); margin-top: 0.5rem; font-size: 0.9rem;"><i class="fas fa-rupee-sign"></i> ${loc.consultationFeeAtThisLocation} Consultation Fee</p>` : ''}
-                                </div>
-                            </div>
-                        `).join('');
-                    } else {
-                        clinicsDiv.innerHTML = '<p style="color: #6B7280; font-style: italic;">No clinics linked yet.</p>';
-                    }
-                }
-            } catch (e) {
-                console.error("Failed to load doctor", e);
-            }
+    fetchProfile(token);
+});
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('doctorPublicId');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userEmail');
+    window.location.href = 'login.html';
+}
+
+async function fetchProfile(token) {
+    try {
+        const response = await fetch('/api/doctors/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        // Simple interactive mock for time slots
-        document.querySelectorAll('.slot:not(.booked)').forEach(slot => {
-            slot.addEventListener('click', function () {
-                document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        document.querySelectorAll('.date-box').forEach(box => {
-            box.addEventListener('click', function () {
-                document.querySelectorAll('.date-box').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        function bookAppointment() {
-            // Placeholder for Phase 3 Booking 
-            if (localStorage.getItem('userRole') !== 'PATIENT') {
-                alert("Please login as a patient to book appointments.");
-                window.location.href = "login.html";
-                return;
-            }
-            window.location.href = "appointment_booking.html";
+        if (!response.ok) {
+            throw new Error('Failed to load profile');
         }
+
+        const profile = await response.json();
+        renderProfile(profile);
+
+    } catch (error) {
+        console.error('Profile error:', error);
+        document.getElementById('profileLoader').innerHTML = `
+            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: var(--danger); margin-bottom: 1rem;"></i>
+            <p style="color: var(--danger);">Failed to load profile. Please try again.</p>
+        `;
+    }
+}
+
+function renderProfile(profile) {
+    document.getElementById('profileLoader').style.display = 'none';
+    document.getElementById('profileContent').style.display = 'block';
+
+    // Header
+    document.getElementById('profileName').textContent = profile.fullName || 'Doctor';
+    document.getElementById('profileSpecialization').textContent = profile.specialization || '-';
+
+    const photoUrl = profile.profilePhoto || 
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName || 'D')}&background=4F46E5&color=fff&size=128`;
+    document.getElementById('profilePhoto').src = photoUrl;
+
+    // Badges
+    document.getElementById('profileRating').textContent = profile.averageRating || 'New';
+    document.getElementById('profileExperience').textContent = profile.experienceYears || '0';
+
+    if (profile.isVerified) {
+        document.getElementById('badgeVerified').style.display = 'inline-flex';
+    }
+    if (profile.isAvailable) {
+        document.getElementById('badgeAvailable').style.display = 'inline-flex';
+    }
+
+    // About
+    document.getElementById('profileAbout').textContent = profile.about || 'No detailed bio available yet.';
+
+    // Contact
+    document.getElementById('profileEmail').textContent = profile.email || '-';
+    document.getElementById('profilePhone').textContent = profile.phone || '-';
+    document.getElementById('profileLanguages').textContent = profile.languagesSpoken || 'English';
+
+    // Professional
+    document.getElementById('profileSpec2').textContent = profile.specialization || '-';
+    document.getElementById('profileQualifications').textContent = profile.qualifications || '-';
+    document.getElementById('profileLicense').textContent = profile.licenseNumber || '-';
+    document.getElementById('profileFee').textContent = profile.consultationFee ? `₹${profile.consultationFee}` : '-';
+
+    // Stats
+    document.getElementById('profileTotalReviews').textContent = profile.totalReviews || '0';
+    document.getElementById('profileAvgRating2').textContent = profile.averageRating || '0';
+}

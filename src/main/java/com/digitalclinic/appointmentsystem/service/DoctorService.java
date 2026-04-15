@@ -200,6 +200,20 @@ public class DoctorService {
         doctorLocationRepository.delete(doctorLocation);
     }
 
+    public List<com.digitalclinic.appointmentsystem.dto.ClinicSummaryDTO> getDoctorClinicSummaries(Long userId) {
+        logger.info("Fetching clinic summaries for doctor user ID: {}", userId);
+        Doctor doctor = doctorRepository.findByUser_Id(userId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+        
+        List<DoctorLocation> doctorLocations = doctorLocationRepository.findByDoctorId(doctor.getId());
+        return doctorLocations.stream()
+                .map(dl -> com.digitalclinic.appointmentsystem.dto.ClinicSummaryDTO.builder()
+                        .locationId(dl.getLocation().getId())
+                        .clinicName(dl.getLocation().getClinicName())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     public List<com.digitalclinic.appointmentsystem.dto.ClinicLocationDTO> getDoctorClinics(Long userId) {
         logger.info("Fetching clinics for doctor user ID: {}", userId);
         Doctor doctor = doctorRepository.findByUser_Id(userId)
@@ -483,6 +497,7 @@ public class DoctorService {
     private DoctorProfileDTO convertToProfileDTO(Doctor doctor) {
         DoctorProfileDTO dto = modelMapper.map(doctor, DoctorProfileDTO.class);
         dto.setDoctorId(doctor.getId());
+        dto.setPublicId(doctor.getPublicId());
         if (doctor.getUser() != null) {
             dto.setEmail(doctor.getUser().getEmail());
             dto.setPhone(doctor.getUser().getPhone());

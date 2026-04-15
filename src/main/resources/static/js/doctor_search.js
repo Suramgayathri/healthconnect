@@ -334,7 +334,7 @@ function bookAppointment(doctorId, doctorName) {
 
 // ===== VIEW PROFILE =====
 function viewDoctorProfile(doctorId) {
-    window.location.href = `doctor_profile.html?doctorId=${doctorId}`;
+    window.location.href = `doctor_view.html?doctorId=${doctorId}`;
 }
 
 // ===== LOGOUT =====

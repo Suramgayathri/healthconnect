@@ -109,6 +109,44 @@
         </div>
     </div>
 
+    <!-- Payment Modal (Dummy Flow) -->
+    <div class="success-overlay" id="paymentModal" style="display: none; z-index: 1000;">
+        <div class="success-card" style="max-width: 450px; text-align: center; padding: 2.5rem 2rem;">
+            <div style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"><i class="fas fa-qrcode"></i>
+            </div>
+            <h2 style="margin-bottom: 0.5rem; color: var(--dark);">Complete Payment</h2>
+            <p style="color: #6B7280; margin-bottom: 1rem; font-size: 0.95rem;">
+                Scan the dummy QR code or click below to simulate a secure card/UPI checkout via Razorpay Test Mode.
+            </p>
+
+            <div
+                style="background: #F3F4F6; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; display: inline-block; border: 2px dashed #D1D5DB;">
+                <!-- Dummy QR Placeholder -->
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=DummyPaymentLink" alt="Dummy QR"
+                    style="border-radius: 8px;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem; font-size: 1.1rem; font-weight: 600; color: var(--dark);">
+                Consultation Fee: <span id="paymentFeeDisplay" style="color: var(--primary);">₹---</span>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button type="button" id="razorpayBtn" class="btn-primary"
+                    style="padding: 0.6rem 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-shield-alt"></i> Pay via Razorpay
+                </button>
+                <p style="width: 100%; text-align: center; color: var(--danger); font-size: 0.85rem; margin: 0.5rem 0;">
+                    (Testing environments only)</p>
+                <button type="button" onclick="dummyMarkPaymentComplete()" class="btn-secondary"
+                    style="padding: 0.6rem 1.5rem; border: 1px solid var(--danger); border-radius: 8px; cursor: pointer; background: #FEF2F2; color: var(--danger); font-weight: 600;">
+                    <i class="fas fa-flask"></i> Bypass Payment
+                </button>
+                <button type="button" onclick="cancelPayment()" class="btn-secondary"
+                    style="padding: 0.6rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; background: #e5e7eb; color: #374151; font-weight: 500;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Success Modal -->
     <div class="success-overlay" id="successModal">
         <div class="success-card">
@@ -121,6 +159,7 @@
         </div>
     </div>
 
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <script src="/js/notification_handler.js"></script>

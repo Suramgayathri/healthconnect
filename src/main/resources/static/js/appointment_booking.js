@@ -1,6 +1,8 @@
 const urlParams = new URLSearchParams(window.location.search);
         const doctorId = urlParams.get('doctorId');
         let selectedTime = null;
+        let appointmentPayloadCache = null;
+        let cachedConsultationFee = 0;
 
         const getToken = () => localStorage.getItem('token');
         const authHeader = () => ({ 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' });
@@ -26,6 +28,7 @@ const urlParams = new URLSearchParams(window.location.search);
                     const doc = await response.json();
                     document.getElementById('docName').textContent = doc.fullName;
                     document.getElementById('docSpecialty').textContent = doc.specialization;
+                    cachedConsultationFee = doc.consultationFee;
                     document.getElementById('docFee').textContent = `₹${doc.consultationFee} / Consultation`;
                     
                     // Fix profile image URL
@@ -190,6 +193,69 @@ const urlParams = new URLSearchParams(window.location.search);
                 payload.symptoms = document.getElementById('symptoms').value;
             }
 
+            // Save payload to hit API later, showing payment modal now
+            appointmentPayloadCache = { payload, isEmergency };
+            
+            document.getElementById('paymentFeeDisplay').textContent = `₹${cachedConsultationFee}`;
+            document.getElementById('paymentModal').style.display = 'flex';
+        });
+
+        // Cancel Payment
+        window.cancelPayment = function() {
+            document.getElementById('paymentModal').style.display = 'none';
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerHTML = 'Confirm Booking';
+            submitBtn.disabled = false;
+        };
+
+        // Dummy Payment Bypass
+        window.dummyMarkPaymentComplete = function() {
+            if (appointmentPayloadCache) {
+                appointmentPayloadCache.payload.paymentStatus = 'PAID';
+                completeFinalBooking(appointmentPayloadCache.payload, appointmentPayloadCache.isEmergency);
+                document.getElementById('paymentModal').style.display = 'none';
+            }
+        };
+
+        // Pay via Razorpay
+        document.getElementById('razorpayBtn').addEventListener('click', async () => {
+            try {
+                // Fetch key dynamically
+                const rzpRes = await fetch('/api/payments/config', { headers: authHeader() });
+                const rzpConfig = await rzpRes.json();
+                
+                const options = {
+                    "key": rzpConfig.keyId,
+                    "amount": (cachedConsultationFee * 100).toString(), 
+                    "currency": "INR",
+                    "name": "HealthConnect Care",
+                    "description": "Dummy Booking Transaction",
+                    "handler": function (response) {
+                        // Payment successful => complete booking
+                        appointmentPayloadCache.payload.paymentStatus = 'PAID';
+                        completeFinalBooking(appointmentPayloadCache.payload, appointmentPayloadCache.isEmergency);
+                        document.getElementById('paymentModal').style.display = 'none';
+                    },
+                    "prefill": {
+                        "name": "Test Patient",
+                        "email": "test@example.com",
+                        "contact": "9999999999"
+                    },
+                    "theme": { "color": "#4F46E5" }
+                };
+                
+                const rzp = new window.Razorpay(options);
+                rzp.on('payment.failed', function(response) {
+                    showError("Payment Failed or Cancelled. Please try again.");
+                });
+                rzp.open();
+
+            } catch (e) {
+                showError("Could not initialize Payment Gateway.");
+            }
+        });
+
+        async function completeFinalBooking(payload, isEmergency) {
             const endpoint = isEmergency ? '/api/appointments/emergency' : '/api/appointments';
 
             try {
@@ -211,10 +277,11 @@ const urlParams = new URLSearchParams(window.location.search);
                 }
             } catch (err) {
                 showError("A network error occurred.");
-                submitBtn.innerHTML = originalText;
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.innerHTML = 'Confirm Booking';
                 submitBtn.disabled = false;
             }
-        });
+        }
 
         function showError(msg) {
             const alert = document.getElementById('errorAlert');

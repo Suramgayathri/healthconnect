@@ -18,7 +18,10 @@ public class DoctorSearchDTO {
     private BigDecimal minRating;
     private String availability;
 
+    @Builder.Default
     private String sortBy = "rating";
+    @Builder.Default
     private Integer page = 0;
+    @Builder.Default
     private Integer size = 10;
 }

@@ -33,7 +33,7 @@ async function fetchAllData(token) {
 
     try {
         // 1. Get Profile to find Patient ID
-        const profileRes = await fetch('/api/patients/me', { headers: { 'Authorization': `Bearer ${token}` } });
+        const profileRes = await fetch('/api/patients/profile', { headers: { 'Authorization': `Bearer ${token}` } });
         if (!profileRes.ok) throw new Error("Could not fetch profile");
         const profile = await profileRes.json();
         const patientId = profile.id || profile.patientId;
@@ -41,7 +41,7 @@ async function fetchAllData(token) {
         // 2. Fetch parallel requests
         const [prescRes, vitalsRes, recordsRes] = await Promise.all([
             fetch(`/api/prescriptions/patient/${patientId}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-            fetch('/api/vitals/me', { headers: { 'Authorization': `Bearer ${token}` } }), // Assuming existing or mock endpoint
+            fetch('/api/patients/vitals', { headers: { 'Authorization': `Bearer ${token}` } }), 
             fetch(`/api/records/patient/${patientId}`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
 
@@ -84,7 +84,7 @@ function renderPrescriptions(prescriptions) {
                 <div class="rc-doctor">Dr. ${p.doctorName || 'Unknown'}</div>
                 <div class="rc-desc">${p.medications ? p.medications.length : 0} medications prescribed</div>
                 <div class="rc-footer">
-                    <button class="btn btn-outline-primary" style="width:100%" onclick="downloadPdf('${p.pdfUrl}')">
+                    <button class="btn btn-outline-primary" style="width:100%" onclick="downloadPdf('${p.pdfUrl}', 'prescriptions')">
                         <i class="fas fa-download"></i> Download PDF
                     </button>
                 </div>
@@ -117,7 +117,7 @@ function renderDocuments(records) {
                 <div class="rc-title">${r.recordName}</div>
                 <div class="rc-desc">${r.description || 'No description provided'}</div>
                 <div class="rc-footer">
-                    <button class="btn btn-outline-primary" style="width:100%" onclick="downloadPdf('${r.fileUrl}')">
+                    <button class="btn btn-outline-primary" style="width:100%" onclick="downloadPdf('${r.fileUrl}', 'records')">
                         <i class="fas fa-download"></i> Download File
                     </button>
                 </div>
@@ -220,12 +220,38 @@ function initChart(labels, hrData, bpData) {
     });
 }
 
-function downloadPdf(url) {
-    if (!url) { alert("File not available"); return; }
-    // We add token to URL as query param or fetch as blob. 
-    // Since direct link `<img src="">` worked in prompt before, we assume direct link works for download.
-    // However, secure way is fetching blob, but window.open is standard for 'downloading'.
-    window.open(url, '_blank');
+function downloadPdf(filename, type) {
+    if (!filename || filename === 'null') { alert("File not available yet"); return; }
+    
+    // Extract raw filename if it's already a full path or absolute URL
+    let cleanName = filename.split('/').pop();
+    
+    const token = localStorage.getItem('token');
+    const endpoint = `/api/${type}/download/${cleanName}`;
+    
+    // Modern secure download through blob fetch
+    fetch(endpoint, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(r => {
+        if (!r.ok) throw new Error("File not found or access denied.");
+        return r.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = cleanName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(e => {
+        alert(e.message);
+        console.error("Download Error", e);
+    });
 }
 
 // Modal Upload Logic
@@ -247,7 +273,7 @@ async function uploadDocument() {
     const file = fileInput.files[0];
 
     // Get patient ID
-    const profileRes = await fetch('/api/patients/me', { headers: { 'Authorization': `Bearer ${token}` } });
+    const profileRes = await fetch('/api/patients/profile', { headers: { 'Authorization': `Bearer ${token}` } });
     const profile = await profileRes.json();
     const patientId = profile.id || profile.patientId;
 

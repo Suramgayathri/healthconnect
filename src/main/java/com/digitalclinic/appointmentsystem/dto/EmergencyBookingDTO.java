@@ -43,4 +43,6 @@ public class EmergencyBookingDTO {
     private String chiefComplaint;
 
     private String symptoms;
+    
+    private String paymentStatus;
 }

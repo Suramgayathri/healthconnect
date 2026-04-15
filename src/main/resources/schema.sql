@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS specializations (
 -- 3. doctors
 CREATE TABLE IF NOT EXISTS doctors (
     doctor_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    public_id VARCHAR(36) NOT NULL UNIQUE,
     user_id BIGINT NOT NULL UNIQUE,
     full_name VARCHAR(100) NOT NULL,
     specialty VARCHAR(100),

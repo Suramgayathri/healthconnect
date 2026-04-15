@@ -108,6 +108,19 @@ body {
     color: var(--primary);
 }
 
+.nav-links .profile-icon {
+    font-size: 1.6rem;
+    color: var(--primary);
+    transition: transform 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.nav-links .profile-icon:hover {
+    transform: scale(1.15);
+    color: var(--primary-dark);
+}
+
 .btn-outline-danger {
     padding: 0.5rem 1rem;
     border-radius: 8px;
